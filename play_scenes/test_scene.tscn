@@ -5,6 +5,7 @@
 [ext_resource type="Script" uid="uid://cfgw5vpbji85c" path="res://scripts/game_camera.gd" id="3_camera"]
 [ext_resource type="Resource" path="res://resources/default_camera_settings.tres" id="4_camera_settings"]
 [ext_resource type="Script" uid="uid://dvf6fogxqita5" path="res://scripts/game_manager.gd" id="5_game_manager"]
+[ext_resource type="Script" uid="uid://dpp8fsdsxup6h" path="res://scripts/game_screen.gd" id="6_game_screen"]
 
 [sub_resource type="Environment" id="Environment_depth"]
 background_mode = 1
@@ -28,7 +29,51 @@ radius = 0.25
 height = 1.0
 rings = 7
 
+[sub_resource type="StyleBoxFlat" id="StyleBox_hud_panel"]
+bg_color = Color(0.035, 0.045, 0.065, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.76, 0.58, 0.22, 0.7)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_action"]
+bg_color = Color(0.12, 0.15, 0.21, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.76, 0.58, 0.22, 0.85)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_action_hover"]
+bg_color = Color(0.28, 0.2, 0.08, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.78, 0.32, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_action_disabled"]
+bg_color = Color(0.07, 0.08, 0.1, 0.72)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
 [node name="TestScene" type="Node3D" unique_id=1627007311]
+script = ExtResource("6_game_screen")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1566233537]
 environment = SubResource("Environment_depth")
@@ -47,10 +92,9 @@ local_player = NodePath("../Player")
 transform = Transform3D(0.86602527, 0.3535535, -0.35355362, 0, 0.7071069, 0.70710665, 0.50000024, -0.6123722, 0.61237246, 0, 0, 0)
 light_color = Color(1, 0.91, 0.78, 1)
 light_energy = 1.25
-light_angular_distance = 0.75
 shadow_enabled = true
 shadow_opacity = 0.82
-shadow_blur = 1.25
+shadow_blur = 0.5
 
 [node name="Board" parent="." unique_id=1073595570 instance=ExtResource("1_board")]
 
@@ -60,23 +104,105 @@ mesh = SubResource("CapsuleMesh_b77r1")
 script = ExtResource("2_r82hh")
 color = Color(0, 1, 0, 1)
 
-[node name="Player2" type="MeshInstance3D" parent="."]
+[node name="Player2" type="MeshInstance3D" parent="." unique_id=1341604880]
 mesh = SubResource("CapsuleMesh_b77r1")
 script = ExtResource("2_r82hh")
 color = Color(0.95, 0.2, 0.16, 1)
 
-[node name="Player3" type="MeshInstance3D" parent="."]
+[node name="Player3" type="MeshInstance3D" parent="." unique_id=117340317]
 mesh = SubResource("CapsuleMesh_b77r1")
 script = ExtResource("2_r82hh")
 color = Color(0.12, 0.45, 1, 1)
 
-[node name="Player4" type="MeshInstance3D" parent="."]
+[node name="Player4" type="MeshInstance3D" parent="." unique_id=981296823]
 mesh = SubResource("CapsuleMesh_b77r1")
 script = ExtResource("2_r82hh")
 color = Color(1, 0.78, 0.08, 1)
 
-[node name="GameManager" type="Node" parent="." node_paths=PackedStringArray("board", "game_camera", "participants")]
+[node name="GameManager" type="Node" parent="." unique_id=259014469 node_paths=PackedStringArray("board", "game_camera", "participants")]
 script = ExtResource("5_game_manager")
 board = NodePath("../Board")
 game_camera = NodePath("../Camera3D")
-participants = Array[NodePath]([NodePath("../Player"), NodePath("../Player2"), NodePath("../Player3"), NodePath("../Player4")])
+participants = [NodePath("../Player"), NodePath("../Player2"), NodePath("../Player3"), NodePath("../Player4")]
+auto_start = false
+
+[node name="GameUI" type="CanvasLayer" parent="." unique_id=1436480236]
+
+[node name="TurnPanel" type="PanelContainer" parent="GameUI" unique_id=1762341076]
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 438.0
+offset_bottom = 168.0
+theme_override_styles/panel = SubResource("StyleBox_hud_panel")
+
+[node name="Margin" type="MarginContainer" parent="GameUI/TurnPanel" unique_id=1496098760]
+layout_mode = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 14
+
+[node name="Content" type="VBoxContainer" parent="GameUI/TurnPanel/Margin" unique_id=2096658283]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="TurnLabel" type="Label" parent="GameUI/TurnPanel/Margin/Content" unique_id=1787978662]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.81, 0.4, 1)
+theme_override_font_sizes/font_size = 23
+text = "Starting Match..."
+
+[node name="RollResultLabel" type="Label" parent="GameUI/TurnPanel/Margin/Content" unique_id=1855421198]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.92, 0.96, 1)
+theme_override_font_sizes/font_size = 17
+text = "No roll yet"
+
+[node name="HintLabel" type="Label" parent="GameUI/TurnPanel/Margin/Content" unique_id=1992814294]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.69, 0.77, 1)
+theme_override_font_sizes/font_size = 14
+text = "Preparing the board..."
+
+[node name="Actions" type="HBoxContainer" parent="GameUI" unique_id=1567847190]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -386.0
+offset_top = -86.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_constants/separation = 12
+
+[node name="RollButton" type="Button" parent="GameUI/Actions" unique_id=33203358]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(175, 62)
+layout_mode = 2
+theme_override_colors/font_disabled_color = Color(0.35, 0.37, 0.42, 1)
+theme_override_font_sizes/font_size = 19
+theme_override_styles/normal = SubResource("StyleBox_action")
+theme_override_styles/pressed = SubResource("StyleBox_action_hover")
+theme_override_styles/hover = SubResource("StyleBox_action_hover")
+theme_override_styles/disabled = SubResource("StyleBox_action_disabled")
+theme_override_styles/focus = SubResource("StyleBox_action_hover")
+text = "Roll Dice"
+
+[node name="EndTurnButton" type="Button" parent="GameUI/Actions" unique_id=1557973272]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(175, 62)
+layout_mode = 2
+theme_override_colors/font_disabled_color = Color(0.35, 0.37, 0.42, 1)
+theme_override_font_sizes/font_size = 19
+theme_override_styles/normal = SubResource("StyleBox_action")
+theme_override_styles/pressed = SubResource("StyleBox_action_hover")
+theme_override_styles/hover = SubResource("StyleBox_action_hover")
+theme_override_styles/disabled = SubResource("StyleBox_action_disabled")
+theme_override_styles/focus = SubResource("StyleBox_action_hover")
+text = "End Turn"

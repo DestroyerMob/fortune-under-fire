@@ -1,8 +1,8 @@
 # Fortune Under Fire
 
 Fortune Under Fire is an early Godot 3D board-game prototype. The current work
-focuses on the board route, entity movement, and camera presentation before the
-turn and networking layers are added.
+focuses on the board route, entity movement, local turn flow, and camera
+presentation before networking is added.
 
 ## Current systems
 
@@ -20,6 +20,10 @@ turn and networking layers are added.
 - `GameManager` runs a dynamic one-to-four participant turn order, round count,
   human dice input, AI turns, defeat skipping, and match completion.
 - Entities begin each match with 100 health and 200 money.
+- The game opens on a main menu with a two-to-four-player setup. Player 1 is
+  human-controlled and every remaining participant is AI-controlled.
+- The game HUD exposes Roll Dice and End Turn actions and reports the active
+  round, participant, and latest dice result.
 
 ## Camera
 
@@ -64,9 +68,10 @@ var dice_values := entity._roll()
 var destination_index := await board.move_entity(entity, dice_values)
 ```
 
-In the current test scene, pressing Space triggers the `roll_dice` input action.
-`GameManager` rolls for the active human and sends the result through this board
-movement API.
+In the game scene, pressing Space or selecting Roll Dice triggers the `roll_dice`
+input action. `GameManager` rolls for the active human and sends the result
+through this board movement API. Once movement finishes, End Turn advances to
+the next participant.
 
 The board emits `past_start(entity)` once for every completed lap before it runs
 the destination plot's `on_land(entity)` behaviour. The future Start plot logic
@@ -97,15 +102,17 @@ match at four participants.
 At match start, the manager resets each entity, registers it with the board,
 starts round one, and tells the camera to focus on the active entity. Pressing
 Space rolls only for the active human participant. The manager awaits the full
-board movement and landing resolution before advancing. `EntityType.AI`
-participants can roll automatically after the configurable `ai_roll_delay`.
+board movement and landing resolution, then waits for End Turn before advancing.
+`EntityType.AI` participants automatically roll after the configurable
+`ai_roll_delay` and end their turn as soon as their movement resolves.
 
 The principal lifecycle signals are `match_started`, `round_started`,
-`turn_started`, `dice_rolled`, `turn_finished`, `turn_skipped`, and
-`match_finished`. Defeated participants are skipped, and the match finishes when
-one participant remains. `play_active_turn(dice_values)` is also available for
-tests and future authoritative multiplayer logic where validated dice should be
-supplied rather than generated locally.
+`turn_started`, `dice_rolled`, `roll_finished`, `turn_finished`, `turn_skipped`,
+and `match_finished`. Defeated participants are skipped, and the match finishes
+when one participant remains. `play_active_turn(dice_values)` is also available
+for tests and future authoritative multiplayer logic where validated dice should
+be supplied rather than generated locally; `request_end_turn()` performs the
+shared end-turn validation.
 
 Each entity has configurable `max_health` and `starting_money`, defaulting to
 100 and 200. Runtime values are exposed as `health` and `money` and reset at the

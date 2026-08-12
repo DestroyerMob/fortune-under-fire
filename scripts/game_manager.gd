@@ -6,6 +6,13 @@ signal match_finished(winner: Entity)
 signal round_started(round_number: int)
 signal turn_started(entity: Entity, participant_index: int, round_number: int, turn_number: int)
 signal dice_rolled(entity: Entity, dice_values: Array[int])
+signal roll_finished(
+	entity: Entity,
+	destination_index: int,
+	participant_index: int,
+	round_number: int,
+	turn_number: int
+)
 signal turn_skipped(entity: Entity, reason: StringName)
 signal turn_finished(
 	entity: Entity,
@@ -37,6 +44,8 @@ var turn_number := 0
 var active_participant_index := -1
 
 var _turn_is_resolving := false
+var _active_entity_has_rolled := false
+var _last_destination_index := -1
 var _turn_generation := 0
 
 
@@ -95,6 +104,10 @@ func is_turn_resolving() -> bool:
 	return _turn_is_resolving
 
 
+func has_active_entity_rolled() -> bool:
+	return _active_entity_has_rolled
+
+
 ## Used by local input. Multiplayer authority can instead call play_active_turn()
 ## with validated dice values and replicate the result.
 func request_roll(requesting_entity: Entity = null) -> bool:
@@ -110,8 +123,8 @@ func request_roll(requesting_entity: Entity = null) -> bool:
 	return true
 
 
-## Resolves one complete turn and advances only after physical movement and the
-## destination plot's landing behaviour have finished.
+## Resolves the active participant's roll. The turn remains active after physical
+## movement and landing behaviour complete until request_end_turn() is called.
 func play_active_turn(dice_values: Array[int]) -> int:
 	var active_entity := get_active_entity()
 	if not _can_resolve_turn(active_entity):
@@ -121,6 +134,7 @@ func play_active_turn(dice_values: Array[int]) -> int:
 		return -1
 
 	_turn_is_resolving = true
+	_active_entity_has_rolled = true
 	var resolving_index := active_participant_index
 	var resolving_round := round_number
 	var resolving_turn := turn_number
@@ -129,7 +143,8 @@ func play_active_turn(dice_values: Array[int]) -> int:
 
 	var destination_index := await board.move_entity(active_entity, rolled_values)
 	_turn_is_resolving = false
-	turn_finished.emit(
+	_last_destination_index = destination_index
+	roll_finished.emit(
 		active_entity,
 		destination_index,
 		resolving_index,
@@ -137,9 +152,29 @@ func play_active_turn(dice_values: Array[int]) -> int:
 		resolving_turn
 	)
 
-	if state == MatchState.ACTIVE:
-		_advance_turn()
 	return destination_index
+
+
+## Ends a turn after its roll and movement have resolved. Human UI, AI logic,
+## and future network authority all use the same validation path.
+func request_end_turn(requesting_entity: Entity = null) -> bool:
+	var active_entity := get_active_entity()
+	if state != MatchState.ACTIVE or _turn_is_resolving:
+		return false
+	if not is_instance_valid(active_entity) or not _active_entity_has_rolled:
+		return false
+	if requesting_entity != null and requesting_entity != active_entity:
+		return false
+
+	turn_finished.emit(
+		active_entity,
+		_last_destination_index,
+		active_participant_index,
+		round_number,
+		turn_number
+	)
+	_advance_turn()
+	return true
 
 
 func get_alive_participants() -> Array[Entity]:
@@ -157,6 +192,8 @@ func _begin_current_turn() -> void:
 		return
 
 	_turn_generation += 1
+	_active_entity_has_rolled = false
+	_last_destination_index = -1
 	if is_instance_valid(game_camera):
 		game_camera.focus_turn_target(active_entity)
 	turn_started.emit(
@@ -205,6 +242,8 @@ func _find_next_eligible_index(from_index: int) -> int:
 func _finish_match(winner: Entity) -> void:
 	state = MatchState.FINISHED
 	_turn_is_resolving = false
+	_active_entity_has_rolled = false
+	_last_destination_index = -1
 	_turn_generation += 1
 	active_participant_index = -1
 	match_finished.emit(winner)
@@ -218,7 +257,10 @@ func _schedule_ai_turn(expected_entity: Entity, generation: int) -> void:
 		return
 	if _turn_is_resolving or expected_entity.is_defeated():
 		return
-	play_active_turn(expected_entity.roll_dice())
+	await play_active_turn(expected_entity.roll_dice())
+	if generation != _turn_generation:
+		return
+	request_end_turn(expected_entity)
 
 
 func _on_participant_defeated(entity: Entity) -> void:
@@ -237,6 +279,7 @@ func _can_resolve_turn(active_entity: Entity) -> bool:
 	return (
 		state == MatchState.ACTIVE
 		and not _turn_is_resolving
+		and not _active_entity_has_rolled
 		and is_instance_valid(active_entity)
 		and not active_entity.is_defeated()
 		and is_instance_valid(board)
