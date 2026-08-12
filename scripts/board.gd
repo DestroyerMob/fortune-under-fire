@@ -13,7 +13,6 @@ signal plot_landed(entity: Entity, plot: Plot, plot_index: int)
 signal movement_interrupted(entity: Entity, plot_index: int)
 signal movement_finished(entity: Entity, destination_index: int)
 
-@export var player: Entity
 @export_category("Movement")
 @export_range(0.1, 20.0, 0.1, "suffix:m/s") var movement_units_per_second := 5.0
 ## The normal spacing between edge plots, used to scale speed for unusual gaps.
@@ -42,25 +41,6 @@ func _ready() -> void:
 
 	if plots.is_empty():
 		push_error("Board has no plots in its movement route.")
-		return
-
-	if player != null:
-		register_entity(player)
-
-
-func _unhandled_input(event: InputEvent) -> void:
-	if not event.is_action_pressed(&"roll_dice"):
-		return
-
-	if not is_instance_valid(player):
-		push_error("A local player must be assigned before rolling the dice.")
-		return
-
-	if is_entity_moving(player):
-		return
-
-	move_entity(player, player._roll())
-	get_viewport().set_input_as_handled()
 
 
 ## Adds an entity to this board and places it at a wrapped plot index.

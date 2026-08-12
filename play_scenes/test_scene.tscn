@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://c558edcfiuil3" path="res://scripts/entity.gd" id="2_r82hh"]
 [ext_resource type="Script" uid="uid://cfgw5vpbji85c" path="res://scripts/game_camera.gd" id="3_camera"]
 [ext_resource type="Resource" path="res://resources/default_camera_settings.tres" id="4_camera_settings"]
+[ext_resource type="Script" uid="uid://dvf6fogxqita5" path="res://scripts/game_manager.gd" id="5_game_manager"]
 
 [sub_resource type="Environment" id="Environment_depth"]
 background_mode = 1
@@ -51,11 +52,31 @@ shadow_enabled = true
 shadow_opacity = 0.82
 shadow_blur = 1.25
 
-[node name="Board" parent="." unique_id=1073595570 node_paths=PackedStringArray("player") instance=ExtResource("1_board")]
-player = NodePath("../Player")
+[node name="Board" parent="." unique_id=1073595570 instance=ExtResource("1_board")]
 
 [node name="Player" type="MeshInstance3D" parent="." unique_id=158700989]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.5, 0.75, 9.5)
 mesh = SubResource("CapsuleMesh_b77r1")
 script = ExtResource("2_r82hh")
 color = Color(0, 1, 0, 1)
+
+[node name="Player2" type="MeshInstance3D" parent="."]
+mesh = SubResource("CapsuleMesh_b77r1")
+script = ExtResource("2_r82hh")
+color = Color(0.95, 0.2, 0.16, 1)
+
+[node name="Player3" type="MeshInstance3D" parent="."]
+mesh = SubResource("CapsuleMesh_b77r1")
+script = ExtResource("2_r82hh")
+color = Color(0.12, 0.45, 1, 1)
+
+[node name="Player4" type="MeshInstance3D" parent="."]
+mesh = SubResource("CapsuleMesh_b77r1")
+script = ExtResource("2_r82hh")
+color = Color(1, 0.78, 0.08, 1)
+
+[node name="GameManager" type="Node" parent="." node_paths=PackedStringArray("board", "game_camera", "participants")]
+script = ExtResource("5_game_manager")
+board = NodePath("../Board")
+game_camera = NodePath("../Camera3D")
+participants = Array[NodePath]([NodePath("../Player"), NodePath("../Player2"), NodePath("../Player3"), NodePath("../Player4")])

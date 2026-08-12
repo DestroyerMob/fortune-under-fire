@@ -16,13 +16,16 @@ turn and networking layers are added.
   directional shadows, ambient occlusion, and AgX tone mapping for depth.
 - Plot resources populate both boards with eight coloured property groups and
   four card plots.
-- Card plots award their configured card to the landing entity's deck.
+- Card plots award their configured card to the landing entity's hand.
+- `GameManager` runs a dynamic one-to-four participant turn order, round count,
+  human dice input, AI turns, defeat skipping, and match completion.
+- Entities begin each match with 100 health and 200 money.
 
 ## Camera
 
 The camera is target-agnostic: it follows the entity whose turn is being shown,
-not a node assumed to be the player. When the turn manager is introduced, it
-should hand each active entity to the local camera:
+not a node assumed to be the player. `GameManager` hands each active entity to
+the local camera with:
 
 ```gdscript
 game_camera.focus_turn_target(active_entity)
@@ -61,8 +64,9 @@ var dice_values := entity._roll()
 var destination_index := await board.move_entity(entity, dice_values)
 ```
 
-In the current test scene, pressing Space triggers the `roll_dice` input action,
-rolls for the local player, and sends the result through this board movement API.
+In the current test scene, pressing Space triggers the `roll_dice` input action.
+`GameManager` rolls for the active human and sends the result through this board
+movement API.
 
 The board emits `past_start(entity)` once for every completed lap before it runs
 the destination plot's `on_land(entity)` behaviour. The future Start plot logic
@@ -81,6 +85,33 @@ traps to freeze an entity as it crosses their plot. `movement_started`,
 `movement_interrupted`, and `movement_finished` expose the wider lifecycle to
 UI, audio, and turn-management code. An entity cannot begin another roll while
 its current movement is active.
+
+## Match and turns
+
+`GameManager` owns the participant list and match lifecycle. The exported
+`participants` array defines turn order and accepts between one and four unique
+`Entity` nodes, so the manager does not depend on nodes being named `Player1`,
+`Player2`, and so on. It sanitizes invalid or duplicate entries and caps the
+match at four participants.
+
+At match start, the manager resets each entity, registers it with the board,
+starts round one, and tells the camera to focus on the active entity. Pressing
+Space rolls only for the active human participant. The manager awaits the full
+board movement and landing resolution before advancing. `EntityType.AI`
+participants can roll automatically after the configurable `ai_roll_delay`.
+
+The principal lifecycle signals are `match_started`, `round_started`,
+`turn_started`, `dice_rolled`, `turn_finished`, `turn_skipped`, and
+`match_finished`. Defeated participants are skipped, and the match finishes when
+one participant remains. `play_active_turn(dice_values)` is also available for
+tests and future authoritative multiplayer logic where validated dice should be
+supplied rather than generated locally.
+
+Each entity has configurable `max_health` and `starting_money`, defaulting to
+100 and 200. Runtime values are exposed as `health` and `money` and reset at the
+beginning of a match. Use `take_damage()`, `heal()`, `add_money()`, and
+`spend_money()` instead of changing them directly so UI can react to the
+`health_changed`, `money_changed`, and `defeated` signals.
 
 ## Property groups and card plots
 
@@ -131,7 +162,8 @@ directly. The starter card effects themselves remain placeholders.
 
 ## Planned match structure
 
-These are design requirements and are not implemented yet:
+These are wider design requirements that remain beyond the current local turn
+manager:
 
 - A match supports one to four participants.
 - Each participant can independently be a human player or an NPC.
@@ -142,8 +174,8 @@ These are design requirements and are not implemented yet:
 - Matches can be free-for-all or team-based.
 - Team membership belongs to participant/match data rather than the `Entity`
   movement or camera code.
-- The turn manager will choose the active entity, perform movement, resolve the
-  landed plot, then advance to the next eligible participant.
+- Remote multiplayer must make match actions authoritative and synchronize
+  validated turn results to every client.
 
 Keeping participant control type, teams, turn rules, and camera preferences
 separate allows the same match simulation to run locally, over multiplayer, or
