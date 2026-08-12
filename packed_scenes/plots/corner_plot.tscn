@@ -1,0 +1,19 @@
+[gd_scene load_steps=5 format=3 uid="uid://0hka6xn4hr3r"]
+
+[ext_resource type="Script" uid="uid://cd7dq7nn6vjkl" path="res://scripts/plot.gd" id="1_plot"]
+[ext_resource type="Material" path="res://resources/materials/board_base_material.tres" id="2_base_material"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_qwnsq"]
+material = ExtResource("2_base_material")
+size = Vector3(2.25, 0.05, 2.25)
+
+[sub_resource type="BoxMesh" id="BoxMesh_r82hh"]
+size = Vector3(2, 0.05, 2)
+
+[node name="CornerPlot" type="MeshInstance3D" unique_id=403478179]
+mesh = SubResource("BoxMesh_qwnsq")
+script = ExtResource("1_plot")
+
+[node name="Top" type="MeshInstance3D" parent="." unique_id=1607712137]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+mesh = SubResource("BoxMesh_r82hh")

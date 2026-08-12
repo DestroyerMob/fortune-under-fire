@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1_card"]
+
+[resource]
+script = ExtResource("1_card")
+card_id = &"flame_ward"
+display_name = "Flame Ward"
+description = "Defence card placeholder. Its gameplay effect will be added later."

@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="PlotData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/plot_data.gd" id="1_plot"]
+[ext_resource type="Resource" path="res://resources/property_groups/ironworks.tres" id="2_group"]
+
+[resource]
+script = ExtResource("1_plot")
+display_name = "Ironworks Property"
+type = 1
+property_group = ExtResource("2_group")

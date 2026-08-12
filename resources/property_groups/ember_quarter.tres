@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="PropertyGroupData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/property_group_data.gd" id="1_group"]
+
+[resource]
+script = ExtResource("1_group")
+display_name = "Ember Quarter"
+color = Color(0.97, 0.4, 0.03, 1)
+value = 150

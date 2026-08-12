@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="PropertyGroupData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/property_group_data.gd" id="1_group"]
+
+[resource]
+script = ExtResource("1_group")
+display_name = "Ironworks"
+color = Color(0.36, 0.49, 0.98, 1)
+value = 100
