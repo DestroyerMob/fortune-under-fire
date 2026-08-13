@@ -1,9 +1,10 @@
 class_name Board
 extends Node3D
 
-## Emitted once each time an entity crosses from the final plot back to Start.
-## Connect the Start plot's future pass-by behaviour to this signal.
+## Emitted once each time an entity crosses from the final plot back to Start,
+## after its owned-property income has been awarded.
 signal past_start(entity: Entity)
+signal start_income_awarded(entity: Entity, amount: int)
 signal movement_started(entity: Entity, spaces: int, destination_index: int)
 ## Emitted after reaching an intermediate plot. Pass effects such as traps can
 ## react here and call stop_entity_movement(entity).
@@ -12,6 +13,17 @@ signal plot_passed(entity: Entity, plot: Plot, plot_index: int)
 signal plot_landed(entity: Entity, plot: Plot, plot_index: int)
 signal movement_interrupted(entity: Entity, plot_index: int)
 signal movement_finished(entity: Entity, destination_index: int)
+signal building_activated(
+	owner: Entity,
+	source_plot: Plot,
+	building: BuildingData,
+	target: Entity,
+	money_amount: int,
+	damage_amount: int,
+	healing_amount: int,
+	die_roll: int
+)
+signal building_effect_resolved(activation: BuildingActivation)
 
 @export_category("Movement")
 @export_range(0.1, 20.0, 0.1, "suffix:m/s") var movement_units_per_second := 5.0
@@ -35,9 +47,17 @@ var plots: Array[Plot] = []
 var _entity_plot_indices: Dictionary[int, int] = {}
 var _moving_entity_ids: Dictionary[int, bool] = {}
 var _movement_stop_requests: Dictionary[int, bool] = {}
+var building_effect_system: BuildingEffectSystem
 
 func _ready() -> void:
 	plots = _collect_plots()
+	building_effect_system = get_node_or_null(^"BuildingEffectSystem") as BuildingEffectSystem
+	if building_effect_system == null:
+		building_effect_system = BuildingEffectSystem.new()
+		building_effect_system.name = "BuildingEffectSystem"
+		add_child(building_effect_system)
+	building_effect_system.configure(self)
+	building_effect_system.activation_resolved.connect(_on_building_effect_resolved)
 
 	if plots.is_empty():
 		push_error("Board has no plots in its movement route.")
@@ -74,6 +94,17 @@ func move_entity(entity: Entity, dice_values: Array[int]) -> int:
 			return -1
 		spaces_to_move += die_value
 
+	return await move_entity_by_spaces(entity, spaces_to_move)
+
+
+## Moves forward through the normal route without fabricating dice. Card and
+## future forced-movement effects use this so passing Start, pass triggers,
+## landing behavior, and presentation remain identical to a rolled move.
+func move_entity_by_spaces(entity: Entity, spaces_to_move: int) -> int:
+	if not _can_move_entity(entity) or spaces_to_move <= 0:
+		return -1
+	if is_entity_moving(entity):
+		return get_entity_plot_index(entity)
 	return await _move_entity_by_spaces(entity, spaces_to_move)
 
 
@@ -87,6 +118,64 @@ func is_entity_moving(entity: Entity) -> bool:
 	if not is_instance_valid(entity):
 		return false
 	return _moving_entity_ids.has(entity.get_instance_id())
+
+
+func is_any_entity_moving() -> bool:
+	return not _moving_entity_ids.is_empty()
+
+
+func get_plot(plot_index: int) -> Plot:
+	if plot_index < 0 or plot_index >= plots.size():
+		return null
+	return plots[plot_index]
+
+
+func reset_plot_ownership() -> void:
+	for plot in plots:
+		plot.reset_ownership()
+		plot.clear_building()
+
+
+func get_owned_property_income(entity: Entity) -> int:
+	if not is_instance_valid(entity):
+		return 0
+
+	var income := 0
+	for plot in plots:
+		if (
+			plot.plot_owner == entity
+			and plot.data != null
+			and plot.data.is_ownable()
+		):
+			income += plot.get_base_rent()
+	return income
+
+
+func get_owned_properties(entity: Entity) -> Array[Plot]:
+	var owned_properties: Array[Plot] = []
+	if not is_instance_valid(entity):
+		return owned_properties
+
+	for plot in plots:
+		if (
+			plot.plot_owner == entity
+			and plot.data != null
+			and plot.data.is_ownable()
+		):
+			owned_properties.append(plot)
+	return owned_properties
+
+
+func award_start_income(entity: Entity) -> int:
+	var income := get_owned_property_income(entity)
+	income += building_effect_system.activate_lap(
+		entity,
+		get_owned_properties(entity)
+	)
+	if income > 0:
+		entity.add_money(income)
+	start_income_awarded.emit(entity, income)
+	return income
 
 
 ## Safely interrupts movement after the entity reaches its current step. This is
@@ -115,6 +204,15 @@ func get_entity_outward_direction(entity: Entity) -> Vector3:
 	if plot_index == -1:
 		return Vector3.ZERO
 	return get_plot_outward_direction(plot_index)
+
+
+func get_route_distance(first_plot: Plot, second_plot: Plot) -> int:
+	var first_index := plots.find(first_plot)
+	var second_index := plots.find(second_plot)
+	if first_index == -1 or second_index == -1 or plots.is_empty():
+		return -1
+	var direct_distance := absi(first_index - second_index)
+	return mini(direct_distance, plots.size() - direct_distance)
 
 
 func _move_entity_by_spaces(entity: Entity, spaces_to_move: int) -> int:
@@ -154,6 +252,7 @@ func _move_entity_by_spaces(entity: Entity, spaces_to_move: int) -> int:
 
 		current_index = next_index
 		if current_index == 0:
+			award_start_income(entity)
 			past_start.emit(entity)
 
 		var reached_destination := current_index == destination_index
@@ -170,9 +269,26 @@ func _move_entity_by_spaces(entity: Entity, spaces_to_move: int) -> int:
 	# Landing behaviour is deliberately deferred until the destination tween has
 	# completed. Intermediate plots only emit plot_passed above.
 	plots[destination_index].on_land(entity)
+	building_effect_system.activate_landing(entity, plots[destination_index])
 	plot_landed.emit(entity, plots[destination_index], destination_index)
 	movement_finished.emit(entity, destination_index)
 	return destination_index
+
+
+func _on_building_effect_resolved(activation: BuildingActivation) -> void:
+	building_effect_resolved.emit(activation)
+	# Compatibility bridge for presentation/tests that still consume the former
+	# positional event. New systems should prefer building_effect_resolved.
+	building_activated.emit(
+		activation.owner,
+		activation.source_plot,
+		activation.building,
+		activation.target,
+		activation.get_money_amount(),
+		activation.get_damage_amount(),
+		activation.get_healing_amount(),
+		activation.die_roll
+	)
 
 
 func _get_step_duration(step_distance: float) -> float:

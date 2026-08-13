@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://d1a36o2qmq2nu"]
+[gd_scene load_steps=19 format=3 uid="uid://d1a36o2qmq2nu"]
 
 [ext_resource type="PackedScene" uid="uid://bixhist66iv75" path="res://packed_scenes/plots/edge_plot.tscn" id="1_edge"]
 [ext_resource type="Script" uid="uid://b023c1rsqatgy" path="res://scripts/board.gd" id="1_psa4d"]
@@ -16,9 +16,14 @@
 [ext_resource type="Resource" path="res://resources/plots/crimson_court.tres" id="13_crimson"]
 [ext_resource type="Resource" path="res://resources/plots/obsidian_crown.tres" id="14_obsidian"]
 [ext_resource type="Resource" path="res://resources/plots/lucky_break_card.tres" id="15_lucky_card"]
+[ext_resource type="Resource" path="res://resources/plots/start.tres" id="16_start"]
+[ext_resource type="Script" path="res://scripts/gameplay/building_effect_system.gd" id="17_building_effects"]
 
 [node name="Board" type="Node3D" unique_id=915286416]
 script = ExtResource("1_psa4d")
+
+[node name="BuildingEffectSystem" type="Node" parent="."]
+script = ExtResource("17_building_effects")
 
 [node name="Corners" type="Node3D" parent="." unique_id=37069307]
 
@@ -32,7 +37,7 @@ data = ExtResource("3_corner_data")
 
 [node name="SouthEast" parent="Corners" unique_id=2034639796 instance=ExtResource("2_corner")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.375, 0, 9.375)
-data = ExtResource("3_corner_data")
+data = ExtResource("16_start")
 
 [node name="SouthWest" parent="Corners" unique_id=1252290717 instance=ExtResource("2_corner")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.375, 0, 9.375)
@@ -44,22 +49,37 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -9.375)
 [node name="Plot01" parent="North" unique_id=301571558 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0, 0)
 data = ExtResource("10_arcane")
+base_rent = 18
+tower_rent = 36
+buy_price = 180
 
 [node name="Plot02" parent="North" unique_id=1488562810 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 0)
 data = ExtResource("10_arcane")
+base_rent = 19
+tower_rent = 38
+buy_price = 190
 
 [node name="Plot03" parent="North" unique_id=2069612412 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, 0)
 data = ExtResource("10_arcane")
+base_rent = 20
+tower_rent = 40
+buy_price = 200
 
 [node name="Plot04" parent="North" unique_id=1847389770 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 0)
 data = ExtResource("10_arcane")
+base_rent = 21
+tower_rent = 42
+buy_price = 210
 
 [node name="Plot05" parent="North" unique_id=1437054377 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, 0)
 data = ExtResource("10_arcane")
+base_rent = 22
+tower_rent = 44
+buy_price = 220
 
 [node name="Plot06" parent="North" unique_id=1327558931 instance=ExtResource("1_edge")]
 data = ExtResource("12_snare_card")
@@ -67,22 +87,37 @@ data = ExtResource("12_snare_card")
 [node name="Plot07" parent="North" unique_id=740062981 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
 data = ExtResource("11_tidal")
+base_rent = 20
+tower_rent = 40
+buy_price = 205
 
 [node name="Plot08" parent="North" unique_id=584579150 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0)
 data = ExtResource("11_tidal")
+base_rent = 21
+tower_rent = 42
+buy_price = 215
 
 [node name="Plot09" parent="North" unique_id=1001810219 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, 0)
 data = ExtResource("11_tidal")
+base_rent = 22
+tower_rent = 44
+buy_price = 225
 
 [node name="Plot10" parent="North" unique_id=228608636 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 0)
 data = ExtResource("11_tidal")
+base_rent = 23
+tower_rent = 46
+buy_price = 235
 
 [node name="Plot11" parent="North" unique_id=55853783 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0, 0)
 data = ExtResource("11_tidal")
+base_rent = 24
+tower_rent = 48
+buy_price = 245
 
 [node name="East" type="Node3D" parent="." unique_id=265202731]
 transform = Transform3D(3.1391647e-07, 0, -1, 0, 1, 0, 1, 0, 3.1391647e-07, 9.375, 0, 0)
@@ -90,22 +125,37 @@ transform = Transform3D(3.1391647e-07, 0, -1, 0, 1, 0, 1, 0, 3.1391647e-07, 9.37
 [node name="Plot01" parent="East" unique_id=556497933 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0, 0)
 data = ExtResource("13_crimson")
+base_rent = 23
+tower_rent = 46
+buy_price = 230
 
 [node name="Plot02" parent="East" unique_id=129372415 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 0)
 data = ExtResource("13_crimson")
+base_rent = 24
+tower_rent = 48
+buy_price = 240
 
 [node name="Plot03" parent="East" unique_id=969296089 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, 0)
 data = ExtResource("13_crimson")
+base_rent = 25
+tower_rent = 50
+buy_price = 250
 
 [node name="Plot04" parent="East" unique_id=580409340 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 0)
 data = ExtResource("13_crimson")
+base_rent = 26
+tower_rent = 52
+buy_price = 260
 
 [node name="Plot05" parent="East" unique_id=1998749203 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, 0)
 data = ExtResource("13_crimson")
+base_rent = 27
+tower_rent = 54
+buy_price = 270
 
 [node name="Plot06" parent="East" unique_id=79877892 instance=ExtResource("1_edge")]
 data = ExtResource("15_lucky_card")
@@ -113,22 +163,37 @@ data = ExtResource("15_lucky_card")
 [node name="Plot07" parent="East" unique_id=30550257 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
 data = ExtResource("14_obsidian")
+base_rent = 28
+tower_rent = 56
+buy_price = 280
 
 [node name="Plot08" parent="East" unique_id=1859656427 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0)
 data = ExtResource("14_obsidian")
+base_rent = 29
+tower_rent = 58
+buy_price = 290
 
 [node name="Plot09" parent="East" unique_id=586319640 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, 0)
 data = ExtResource("14_obsidian")
+base_rent = 30
+tower_rent = 60
+buy_price = 300
 
 [node name="Plot10" parent="East" unique_id=1961608342 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 0)
 data = ExtResource("14_obsidian")
+base_rent = 31
+tower_rent = 62
+buy_price = 310
 
 [node name="Plot11" parent="East" unique_id=1615235501 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0, 0)
 data = ExtResource("14_obsidian")
+base_rent = 32
+tower_rent = 64
+buy_price = 320
 
 [node name="South" type="Node3D" parent="." unique_id=1388717984]
 transform = Transform3D(-1, 0, -3.2584137e-07, 0, 1, 0, 3.2584137e-07, 0, -1, 0, 0, 9.375)
@@ -136,22 +201,37 @@ transform = Transform3D(-1, 0, -3.2584137e-07, 0, 1, 0, 3.2584137e-07, 0, -1, 0,
 [node name="Plot01" parent="South" unique_id=424208596 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0, 0)
 data = ExtResource("4_ironworks")
+base_rent = 8
+tower_rent = 16
+buy_price = 80
 
 [node name="Plot02" parent="South" unique_id=2083118181 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 0)
 data = ExtResource("4_ironworks")
+base_rent = 9
+tower_rent = 18
+buy_price = 90
 
 [node name="Plot03" parent="South" unique_id=934315666 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, 0)
 data = ExtResource("4_ironworks")
+base_rent = 10
+tower_rent = 20
+buy_price = 100
 
 [node name="Plot04" parent="South" unique_id=1862475664 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 0)
 data = ExtResource("4_ironworks")
+base_rent = 11
+tower_rent = 22
+buy_price = 110
 
 [node name="Plot05" parent="South" unique_id=1650787742 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, 0)
 data = ExtResource("4_ironworks")
+base_rent = 12
+tower_rent = 24
+buy_price = 120
 
 [node name="Plot06" parent="South" unique_id=1828357265 instance=ExtResource("1_edge")]
 data = ExtResource("6_quick_card")
@@ -159,22 +239,37 @@ data = ExtResource("6_quick_card")
 [node name="Plot07" parent="South" unique_id=1186566614 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
 data = ExtResource("5_verdant")
+base_rent = 10
+tower_rent = 20
+buy_price = 105
 
 [node name="Plot08" parent="South" unique_id=1651977959 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0)
 data = ExtResource("5_verdant")
+base_rent = 11
+tower_rent = 22
+buy_price = 115
 
 [node name="Plot09" parent="South" unique_id=1143054927 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, 0)
 data = ExtResource("5_verdant")
+base_rent = 12
+tower_rent = 24
+buy_price = 125
 
 [node name="Plot10" parent="South" unique_id=2129056765 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 0)
 data = ExtResource("5_verdant")
+base_rent = 13
+tower_rent = 26
+buy_price = 135
 
 [node name="Plot11" parent="South" unique_id=1550971658 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0, 0)
 data = ExtResource("5_verdant")
+base_rent = 14
+tower_rent = 28
+buy_price = 145
 
 [node name="West" type="Node3D" parent="." unique_id=1721999946]
 transform = Transform3D(3.1391647e-07, 0, 1, 0, 1, 0, -1, 0, 3.1391647e-07, -9.375, 0, 0)
@@ -182,22 +277,37 @@ transform = Transform3D(3.1391647e-07, 0, 1, 0, 1, 0, -1, 0, 3.1391647e-07, -9.3
 [node name="Plot01" parent="West" unique_id=534045468 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.5, 0, 0)
 data = ExtResource("7_ember")
+base_rent = 13
+tower_rent = 26
+buy_price = 130
 
 [node name="Plot02" parent="West" unique_id=295374867 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 0)
 data = ExtResource("7_ember")
+base_rent = 14
+tower_rent = 28
+buy_price = 140
 
 [node name="Plot03" parent="West" unique_id=396197293 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.5, 0, 0)
 data = ExtResource("7_ember")
+base_rent = 15
+tower_rent = 30
+buy_price = 150
 
 [node name="Plot04" parent="West" unique_id=2115123214 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 0)
 data = ExtResource("7_ember")
+base_rent = 16
+tower_rent = 32
+buy_price = 160
 
 [node name="Plot05" parent="West" unique_id=1914156485 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5, 0, 0)
 data = ExtResource("7_ember")
+base_rent = 17
+tower_rent = 34
+buy_price = 170
 
 [node name="Plot06" parent="West" unique_id=1945255040 instance=ExtResource("1_edge")]
 data = ExtResource("9_flame_card")
@@ -205,19 +315,34 @@ data = ExtResource("9_flame_card")
 [node name="Plot07" parent="West" unique_id=1508263735 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
 data = ExtResource("8_royal")
+base_rent = 15
+tower_rent = 30
+buy_price = 155
 
 [node name="Plot08" parent="West" unique_id=343396578 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0)
 data = ExtResource("8_royal")
+base_rent = 16
+tower_rent = 32
+buy_price = 165
 
 [node name="Plot09" parent="West" unique_id=1194682466 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.5, 0, 0)
 data = ExtResource("8_royal")
+base_rent = 17
+tower_rent = 34
+buy_price = 175
 
 [node name="Plot10" parent="West" unique_id=703257131 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, 0)
 data = ExtResource("8_royal")
+base_rent = 18
+tower_rent = 36
+buy_price = 185
 
 [node name="Plot11" parent="West" unique_id=2038753588 instance=ExtResource("1_edge")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.5, 0, 0)
 data = ExtResource("8_royal")
+base_rent = 19
+tower_rent = 38
+buy_price = 195

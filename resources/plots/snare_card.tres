@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="PlotData" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="PlotData" format=3 uid="uid://bbfkuusggph3m"]
 
-[ext_resource type="Script" path="res://scripts/plot_data.gd" id="1_plot"]
+[ext_resource type="Script" uid="uid://7aih483h21vw" path="res://scripts/plot_data.gd" id="1_plot"]
 [ext_resource type="Resource" path="res://resources/card_selectors/tactics_deck.tres" id="2_selector"]
 
 [resource]
@@ -8,4 +8,4 @@ script = ExtResource("1_plot")
 display_name = "Tactics Cache"
 type = 3
 card_selector = ExtResource("2_selector")
-top_color = Color(0.95, 0.84, 0.22, 1)
+top_color = Color(0.98, 0.92, 0.68, 1)

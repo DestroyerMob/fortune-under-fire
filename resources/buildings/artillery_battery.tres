@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BuildingData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/building_data.gd" id="1_building"]
+
+[resource]
+script = ExtResource("1_building")
+building_id = &"artillery_battery"
+display_name = "Artillery Battery"
+description = "Supports nearby owned properties when an opponent lands on them."
+type = 4
+category = 1
+build_cost = 190
+damage = 12
+range_spaces = 5
+color = Color(0.48, 0.52, 0.58, 1)

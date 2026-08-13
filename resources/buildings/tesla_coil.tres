@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="BuildingData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/building_data.gd" id="1_building"]
+
+[resource]
+script = ExtResource("1_building")
+building_id = &"tesla_coil"
+display_name = "Tesla Coil"
+description = "Deals more landing damage for every connected Tesla Coil."
+type = 5
+category = 1
+build_cost = 170
+damage = 8
+range_spaces = 4
+color = Color(0.32, 0.92, 1, 1)

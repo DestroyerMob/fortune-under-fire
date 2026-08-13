@@ -25,3 +25,7 @@ func get_value() -> int:
 	if type == PlotType.PROPERTY and property_group != null:
 		return property_group.value
 	return 0
+
+
+func is_ownable() -> bool:
+	return type == PlotType.PROPERTY or type == PlotType.UTILITY

@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="CardData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/card_data.gd" id="1_card"]
+
+[resource]
+script = ExtResource("1_card")
+card_id = &"overtime"
+display_name = "Overtime"
+description = "After rolling, gain one additional roll this turn."
+type = 0
+effect = 1
+color = Color(0.68, 0.38, 0.12, 1)

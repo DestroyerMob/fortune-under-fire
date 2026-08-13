@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="BuildingData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/building_data.gd" id="1_building"]
+
+[resource]
+script = ExtResource("1_building")
+building_id = &"gun_tower"
+display_name = "Gun Tower"
+description = "Deals reliable damage when an opponent lands here."
+type = 3
+category = 1
+build_cost = 120
+damage = 18
+color = Color(0.88, 0.28, 0.24, 1)

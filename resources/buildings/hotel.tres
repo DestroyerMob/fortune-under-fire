@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BuildingData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/building_data.gd" id="1_building"]
+
+[resource]
+script = ExtResource("1_building")
+building_id = &"hotel"
+display_name = "Hotel"
+description = "Upgrades this property's enemy landing charge to tower rent."
+type = 1
+category = 0
+build_cost = 180
+color = Color(0.95, 0.56, 0.18, 1)

@@ -5,4 +5,5 @@ extends Resource
 ## here so all plots in the group receive the same rules and presentation.
 @export var display_name := "Property Group"
 @export var color := Color.WHITE
+## Backward-compatible default for plots without a plot-specific value.
 @export_range(0, 10000, 1) var value := 0

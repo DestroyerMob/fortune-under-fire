@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://bixhist66iv75"]
+[gd_scene load_steps=10 format=3 uid="uid://bixhist66iv75"]
 
 [ext_resource type="Script" uid="uid://cd7dq7nn6vjkl" path="res://scripts/plot.gd" id="1_plot"]
 [ext_resource type="Material" path="res://resources/materials/board_base_material.tres" id="2_base_material"]
@@ -10,6 +10,32 @@ size = Vector3(1.5, 0.05, 2.25)
 [sub_resource type="BoxMesh" id="BoxMesh_xmpek"]
 size = Vector3(1.2, 0.05, 2)
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_owner_pole"]
+albedo_color = Color(0.12, 0.13, 0.16, 1)
+metallic = 0.65
+roughness = 0.3
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_owner_pole"]
+material = SubResource("StandardMaterial3D_owner_pole")
+top_radius = 0.035
+bottom_radius = 0.045
+height = 0.62
+
+[sub_resource type="BoxMesh" id="BoxMesh_owner_flag"]
+size = Vector3(0.48, 0.26, 0.07)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_tower"]
+albedo_color = Color(0.35, 0.38, 0.45, 1)
+metallic = 0.25
+roughness = 0.55
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_tower"]
+material = SubResource("StandardMaterial3D_tower")
+top_radius = 0.2
+bottom_radius = 0.3
+height = 0.62
+radial_segments = 6
+
 [node name="EdgePlot" type="MeshInstance3D" unique_id=1612814104]
 mesh = SubResource("BoxMesh_b77r1")
 script = ExtResource("1_plot")
@@ -17,3 +43,29 @@ script = ExtResource("1_plot")
 [node name="Top" type="MeshInstance3D" parent="." unique_id=483791194]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
 mesh = SubResource("BoxMesh_xmpek")
+
+[node name="OwnerMarker" type="Node3D" parent="."]
+visible = false
+position = Vector3(0, 0.08, -0.76)
+
+[node name="Pole" type="MeshInstance3D" parent="OwnerMarker"]
+position = Vector3(-0.24, 0.31, 0)
+mesh = SubResource("CylinderMesh_owner_pole")
+
+[node name="Flag" type="MeshInstance3D" parent="OwnerMarker"]
+position = Vector3(0, 0.49, 0)
+mesh = SubResource("BoxMesh_owner_flag")
+
+[node name="OwnerLabel" type="Label3D" parent="OwnerMarker"]
+position = Vector3(0, 0.84, 0)
+billboard = 1
+no_depth_test = true
+text = "Owned"
+font_size = 32
+outline_size = 8
+horizontal_alignment = 1
+
+[node name="Tower" type="MeshInstance3D" parent="."]
+visible = false
+position = Vector3(0, 0.35, 0.62)
+mesh = SubResource("CylinderMesh_tower")

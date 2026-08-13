@@ -6,6 +6,26 @@
 [ext_resource type="Resource" path="res://resources/default_camera_settings.tres" id="4_camera_settings"]
 [ext_resource type="Script" uid="uid://dvf6fogxqita5" path="res://scripts/game_manager.gd" id="5_game_manager"]
 [ext_resource type="Script" uid="uid://dpp8fsdsxup6h" path="res://scripts/game_screen.gd" id="6_game_screen"]
+[ext_resource type="Resource" path="res://resources/buildings/apartments.tres" id="7_apartments"]
+[ext_resource type="Script" uid="uid://1326l852h28x" path="res://scripts/building_data.gd" id="7_edu8g"]
+[ext_resource type="Resource" path="res://resources/buildings/hotel.tres" id="8_hotel"]
+[ext_resource type="Resource" uid="uid://bo7j8d1rgh7ih" path="res://resources/buildings/casino.tres" id="9_casino"]
+[ext_resource type="Resource" path="res://resources/buildings/gun_tower.tres" id="10_gun_tower"]
+[ext_resource type="Resource" path="res://resources/buildings/artillery_battery.tres" id="11_artillery"]
+[ext_resource type="Resource" path="res://resources/buildings/tesla_coil.tres" id="12_tesla"]
+[ext_resource type="Resource" path="res://resources/buildings/medic_tower.tres" id="13_medic"]
+[ext_resource type="Resource" path="res://resources/buildings/bank.tres" id="13_bank"]
+[ext_resource type="Script" uid="uid://47cbtcq7v7l5" path="res://scripts/presentation/local_player_hud_controller.gd" id="14_local_hud"]
+[ext_resource type="Script" uid="uid://d1mr6svb32qfc" path="res://scripts/presentation/turn_hud_controller.gd" id="15_turn_hud"]
+[ext_resource type="Script" uid="uid://1bex4k0ck68v" path="res://scripts/presentation/world_action_controller.gd" id="16_world_actions"]
+[ext_resource type="Script" uid="uid://dultgkecbe7ol" path="res://scripts/presentation/owned_property_rail_controller.gd" id="17_property_rail"]
+[ext_resource type="Script" uid="uid://bl8f2ham5nbtp" path="res://scripts/presentation/building_palette_controller.gd" id="18_building_palette"]
+[ext_resource type="Script" uid="uid://bbnxqqsuftpte" path="res://scripts/presentation/gameplay_feedback_controller.gd" id="19_feedback"]
+[ext_resource type="Script" uid="uid://dl17kb0d0fbvo" path="res://scripts/gameplay/property_action_system.gd" id="20_property_actions"]
+[ext_resource type="Script" uid="uid://d4yycfduphak" path="res://scripts/gameplay/ai_turn_controller.gd" id="21_ai_turn"]
+[ext_resource type="Script" uid="uid://gvmgtjfqka4q" path="res://scripts/presentation/turn_camera_controller.gd" id="22_turn_camera"]
+[ext_resource type="Script" path="res://scripts/presentation/card_hand_controller.gd" id="23_card_hand"]
+[ext_resource type="Script" path="res://scripts/gameplay/card_effect_system.gd" id="24_card_effects"]
 
 [sub_resource type="Environment" id="Environment_depth"]
 background_mode = 1
@@ -41,6 +61,39 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
+[sub_resource type="StyleBoxFlat" id="StyleBox_health_background"]
+bg_color = Color(0.055, 0.065, 0.085, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.22, 0.25, 0.32, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_health_fill"]
+bg_color = Color(0.2, 0.72, 0.36, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_world_action"]
+bg_color = Color(0.035, 0.045, 0.065, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.72, 0.24, 0.95)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.55)
+shadow_size = 8
+
 [sub_resource type="StyleBoxFlat" id="StyleBox_action"]
 bg_color = Color(0.12, 0.15, 0.21, 0.96)
 border_width_left = 1
@@ -67,6 +120,18 @@ corner_radius_bottom_left = 8
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_action_disabled"]
 bg_color = Color(0.07, 0.08, 0.1, 0.72)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_action_secondary"]
+bg_color = Color(0.09, 0.105, 0.135, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.36, 0.39, 0.46, 0.9)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
@@ -119,53 +184,450 @@ mesh = SubResource("CapsuleMesh_b77r1")
 script = ExtResource("2_r82hh")
 color = Color(1, 0.78, 0.08, 1)
 
-[node name="GameManager" type="Node" parent="." unique_id=259014469 node_paths=PackedStringArray("board", "game_camera", "participants")]
+[node name="GameManager" type="Node" parent="." unique_id=259014469 node_paths=PackedStringArray("board", "participants")]
 script = ExtResource("5_game_manager")
 board = NodePath("../Board")
-game_camera = NodePath("../Camera3D")
 participants = [NodePath("../Player"), NodePath("../Player2"), NodePath("../Player3"), NodePath("../Player4")]
+available_buildings = Array[ExtResource("7_edu8g")]([ExtResource("7_apartments"), ExtResource("8_hotel"), ExtResource("9_casino"), ExtResource("13_bank"), ExtResource("10_gun_tower"), ExtResource("11_artillery"), ExtResource("12_tesla"), ExtResource("13_medic")])
 auto_start = false
+
+[node name="PropertyActionSystem" type="Node" parent="GameManager" unique_id=344338881]
+script = ExtResource("20_property_actions")
+
+[node name="AiTurnController" type="Node" parent="GameManager" unique_id=1408427316]
+script = ExtResource("21_ai_turn")
+
+[node name="CardEffectSystem" type="Node" parent="GameManager"]
+script = ExtResource("24_card_effects")
+
+[node name="PresentationSystems" type="Node" parent="." unique_id=357150827]
+
+[node name="LocalPlayerHudController" type="Node" parent="PresentationSystems" unique_id=2004857710]
+unique_name_in_owner = true
+script = ExtResource("14_local_hud")
+
+[node name="TurnHudController" type="Node" parent="PresentationSystems" unique_id=1283950364]
+unique_name_in_owner = true
+script = ExtResource("15_turn_hud")
+
+[node name="WorldActionController" type="Node" parent="PresentationSystems" unique_id=1161552759]
+unique_name_in_owner = true
+script = ExtResource("16_world_actions")
+
+[node name="OwnedPropertyRailController" type="Node" parent="PresentationSystems" unique_id=584016766]
+unique_name_in_owner = true
+script = ExtResource("17_property_rail")
+
+[node name="BuildingPaletteController" type="Node" parent="PresentationSystems" unique_id=1644533438]
+unique_name_in_owner = true
+script = ExtResource("18_building_palette")
+
+[node name="GameplayFeedbackController" type="Node" parent="PresentationSystems" unique_id=1858017767]
+unique_name_in_owner = true
+script = ExtResource("19_feedback")
+
+[node name="TurnCameraController" type="Node" parent="PresentationSystems" unique_id=1330057330]
+unique_name_in_owner = true
+script = ExtResource("22_turn_camera")
+
+[node name="CardHandController" type="Node" parent="PresentationSystems"]
+unique_name_in_owner = true
+script = ExtResource("23_card_hand")
 
 [node name="GameUI" type="CanvasLayer" parent="." unique_id=1436480236]
 
-[node name="TurnPanel" type="PanelContainer" parent="GameUI" unique_id=1762341076]
-offset_left = 24.0
-offset_top = 24.0
-offset_right = 438.0
-offset_bottom = 168.0
+[node name="PlayerStatusPanel" type="PanelContainer" parent="GameUI" unique_id=1762341076]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = 260.0
+offset_bottom = 84.0
 theme_override_styles/panel = SubResource("StyleBox_hud_panel")
 
-[node name="Margin" type="MarginContainer" parent="GameUI/TurnPanel" unique_id=1496098760]
+[node name="Margin" type="MarginContainer" parent="GameUI/PlayerStatusPanel" unique_id=1496098760]
 layout_mode = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 14
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 14
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
 
-[node name="Content" type="VBoxContainer" parent="GameUI/TurnPanel/Margin" unique_id=2096658283]
+[node name="Content" type="VBoxContainer" parent="GameUI/PlayerStatusPanel/Margin" unique_id=2096658283]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="TurnLabel" type="Label" parent="GameUI/TurnPanel/Margin/Content" unique_id=1787978662]
+[node name="HealthArea" type="Control" parent="GameUI/PlayerStatusPanel/Margin/Content" unique_id=1731915725]
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+
+[node name="HealthBar" type="ProgressBar" parent="GameUI/PlayerStatusPanel/Margin/Content/HealthArea" unique_id=1628112038]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/background = SubResource("StyleBox_health_background")
+theme_override_styles/fill = SubResource("StyleBox_health_fill")
+value = 100.0
+show_percentage = false
+
+[node name="HealthLabel" type="Label" parent="GameUI/PlayerStatusPanel/Margin/Content/HealthArea" unique_id=1125135508]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.9, 0.92, 0.96, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.7)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 13
+text = "100 / 100"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MoneyLabel" type="Label" parent="GameUI/PlayerStatusPanel/Margin/Content" unique_id=798822296]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.78, 0.32, 1)
+theme_override_font_sizes/font_size = 15
+text = "FUNDS  $1200"
+
+[node name="TurnStatus" type="VBoxContainer" parent="GameUI" unique_id=355475226]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -180.0
+offset_top = 20.0
+offset_right = 180.0
+offset_bottom = 48.0
+grow_horizontal = 2
+theme_override_constants/separation = 1
+
+[node name="TurnLabel" type="Label" parent="GameUI/TurnStatus" unique_id=1787978662]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.81, 0.4, 1)
-theme_override_font_sizes/font_size = 23
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 18
 text = "Starting Match..."
+horizontal_alignment = 1
 
-[node name="RollResultLabel" type="Label" parent="GameUI/TurnPanel/Margin/Content" unique_id=1855421198]
+[node name="RollResultLabel" type="Label" parent="GameUI" unique_id=1855421198]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -195.0
+offset_top = -104.0
+offset_right = -20.0
+offset_bottom = -80.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.9, 0.92, 0.96, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 15
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="OwnedPropertiesRail" type="Control" parent="GameUI" unique_id=36306125]
+unique_name_in_owner = true
+visible = false
+layout_mode = 3
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_top = 96.0
+offset_right = 304.0
+offset_bottom = -20.0
+grow_vertical = 2
+
+[node name="Scroll" type="ScrollContainer" parent="GameUI/OwnedPropertiesRail" unique_id=978379118]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 3
+
+[node name="OwnedPropertiesList" type="VBoxContainer" parent="GameUI/OwnedPropertiesRail/Scroll" unique_id=1378028039]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="WorldActionPanel" type="PanelContainer" parent="GameUI" unique_id=1834552894]
+unique_name_in_owner = true
+visible = false
+offset_right = 292.0
+offset_bottom = 126.0
+theme_override_styles/panel = SubResource("StyleBox_world_action")
+
+[node name="Margin" type="MarginContainer" parent="GameUI/WorldActionPanel" unique_id=1769620418]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 10
+
+[node name="Content" type="VBoxContainer" parent="GameUI/WorldActionPanel/Margin" unique_id=1544427239]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="WorldActionTitle" type="Label" parent="GameUI/WorldActionPanel/Margin/Content" unique_id=296797872]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.81, 0.4, 1)
+theme_override_font_sizes/font_size = 18
+text = "Property"
+horizontal_alignment = 1
+
+[node name="WorldActionDetails" type="Label" parent="GameUI/WorldActionPanel/Margin/Content" unique_id=121756274]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.88, 0.91, 0.96, 1)
+theme_override_font_sizes/font_size = 13
+text = "Property details"
+horizontal_alignment = 1
+
+[node name="Buttons" type="HBoxContainer" parent="GameUI/WorldActionPanel/Margin/Content" unique_id=458339788]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="BuyButton" type="Button" parent="GameUI/WorldActionPanel/Margin/Content/Buttons" unique_id=1283655107]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_disabled_color = Color(0.35, 0.37, 0.42, 1)
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("StyleBox_action")
+theme_override_styles/pressed = SubResource("StyleBox_action_hover")
+theme_override_styles/hover = SubResource("StyleBox_action_hover")
+theme_override_styles/disabled = SubResource("StyleBox_action_disabled")
+theme_override_styles/focus = SubResource("StyleBox_action_hover")
+text = "Buy"
+
+[node name="DeclineButton" type="Button" parent="GameUI/WorldActionPanel/Margin/Content/Buttons" unique_id=456413069]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_disabled_color = Color(0.35, 0.37, 0.42, 1)
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("StyleBox_action_secondary")
+theme_override_styles/pressed = SubResource("StyleBox_action_hover")
+theme_override_styles/hover = SubResource("StyleBox_action_hover")
+theme_override_styles/disabled = SubResource("StyleBox_action_disabled")
+theme_override_styles/focus = SubResource("StyleBox_action_hover")
+text = "Skip"
+
+[node name="PayRentButton" type="Button" parent="GameUI/WorldActionPanel/Margin/Content/Buttons" unique_id=899586482]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(248, 40)
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_disabled_color = Color(0.35, 0.37, 0.42, 1)
+theme_override_font_sizes/font_size = 15
+theme_override_styles/normal = SubResource("StyleBox_action")
+theme_override_styles/pressed = SubResource("StyleBox_action_hover")
+theme_override_styles/hover = SubResource("StyleBox_action_hover")
+theme_override_styles/disabled = SubResource("StyleBox_action_disabled")
+theme_override_styles/focus = SubResource("StyleBox_action_hover")
+text = "Pay Rent"
+
+[node name="BuildingPalette" type="PanelContainer" parent="GameUI" unique_id=528620348]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -272.0
+offset_top = 80.0
+offset_right = -20.0
+offset_bottom = -130.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBox_hud_panel")
+
+[node name="Margin" type="MarginContainer" parent="GameUI/BuildingPalette" unique_id=128416586]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="Content" type="VBoxContainer" parent="GameUI/BuildingPalette/Margin" unique_id=1025991555]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="BuildingManagerTitle" type="Label" parent="GameUI/BuildingPalette/Margin/Content" unique_id=404097188]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.69, 0.61, 0.43, 1)
+theme_override_font_sizes/font_size = 13
+text = "BUILD"
+
+[node name="BuildingTargetLabel" type="Label" parent="GameUI/BuildingPalette/Margin/Content" unique_id=1458153674]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.9, 0.92, 0.96, 1)
-theme_override_font_sizes/font_size = 17
-text = "No roll yet"
+theme_override_font_sizes/font_size = 16
+text = "Selected property"
+text_overrun_behavior = 3
 
-[node name="HintLabel" type="Label" parent="GameUI/TurnPanel/Margin/Content" unique_id=1992814294]
+[node name="BuildingStatusLabel" type="Label" parent="GameUI/BuildingPalette/Margin/Content" unique_id=2105288667]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.61, 0.65, 0.73, 1)
+theme_override_font_sizes/font_size = 13
+text = "Unbuilt"
+
+[node name="BuildingDescriptionLabel" type="Label" parent="GameUI/BuildingPalette/Margin/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.61, 0.65, 0.73, 1)
+theme_override_font_sizes/font_size = 12
+text = "Building effect"
+autowrap_mode = 2
+
+[node name="Separator" type="HSeparator" parent="GameUI/BuildingPalette/Margin/Content" unique_id=1502790742]
+layout_mode = 2
+
+[node name="Scroll" type="ScrollContainer" parent="GameUI/BuildingPalette/Margin/Content" unique_id=1449479734]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 3
+
+[node name="BuildingButtonList" type="VBoxContainer" parent="GameUI/BuildingPalette/Margin/Content/Scroll" unique_id=1882129251]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.65, 0.69, 0.77, 1)
-theme_override_font_sizes/font_size = 14
-text = "Preparing the board..."
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
+
+[node name="BankControls" type="VBoxContainer" parent="GameUI/BuildingPalette/Margin/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BankBalanceLabel" type="Label" parent="GameUI/BuildingPalette/Margin/Content/BankControls"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.79, 0.31, 1)
+theme_override_font_sizes/font_size = 18
+text = "STORED  $0"
+
+[node name="BankInterestLabel" type="Label" parent="GameUI/BuildingPalette/Margin/Content/BankControls"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.61, 0.65, 0.73, 1)
+theme_override_font_sizes/font_size = 12
+text = "10% interest when you pass Start"
+
+[node name="Amount" type="HBoxContainer" parent="GameUI/BuildingPalette/Margin/Content/BankControls"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Label" type="Label" parent="GameUI/BuildingPalette/Margin/Content/BankControls/Amount"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.61, 0.65, 0.73, 1)
+theme_override_font_sizes/font_size = 12
+text = "AMOUNT"
+vertical_alignment = 1
+
+[node name="BankAmount" type="SpinBox" parent="GameUI/BuildingPalette/Margin/Content/BankControls/Amount"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(126, 36)
+layout_mode = 2
+min_value = 10.0
+max_value = 1000000.0
+step = 10.0
+value = 100.0
+allow_greater = true
+
+[node name="Buttons" type="HBoxContainer" parent="GameUI/BuildingPalette/Margin/Content/BankControls"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BankDepositButton" type="Button" parent="GameUI/BuildingPalette/Margin/Content/BankControls/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(108, 40)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_disabled_color = Color(0.35, 0.37, 0.42, 1)
+theme_override_font_sizes/font_size = 12
+theme_override_styles/normal = SubResource("StyleBox_action")
+theme_override_styles/pressed = SubResource("StyleBox_action_hover")
+theme_override_styles/hover = SubResource("StyleBox_action_hover")
+theme_override_styles/disabled = SubResource("StyleBox_action_disabled")
+theme_override_styles/focus = SubResource("StyleBox_action_hover")
+text = "Deposit  $100"
+
+[node name="BankWithdrawButton" type="Button" parent="GameUI/BuildingPalette/Margin/Content/BankControls/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(108, 40)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/font_disabled_color = Color(0.35, 0.37, 0.42, 1)
+theme_override_font_sizes/font_size = 12
+theme_override_styles/normal = SubResource("StyleBox_action_secondary")
+theme_override_styles/pressed = SubResource("StyleBox_action_hover")
+theme_override_styles/hover = SubResource("StyleBox_action_hover")
+theme_override_styles/disabled = SubResource("StyleBox_action_disabled")
+theme_override_styles/focus = SubResource("StyleBox_action_hover")
+text = "Withdraw  $100"
+
+[node name="CardHand" type="Control" parent="GameUI"]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -360.0
+offset_top = -128.0
+offset_right = 360.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="CardList" type="HBoxContainer" parent="GameUI/CardHand"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 10
+alignment = 1
 
 [node name="Actions" type="HBoxContainer" parent="GameUI" unique_id=1567847190]
 anchors_preset = 3
@@ -173,36 +635,25 @@ anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -386.0
-offset_top = -86.0
-offset_right = -24.0
-offset_bottom = -24.0
+offset_left = -195.0
+offset_top = -74.0
+offset_right = -20.0
+offset_bottom = -20.0
 grow_horizontal = 0
 grow_vertical = 0
 theme_override_constants/separation = 12
 
-[node name="RollButton" type="Button" parent="GameUI/Actions" unique_id=33203358]
+[node name="TurnActionButton" type="Button" parent="GameUI/Actions" unique_id=33203358]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(175, 62)
+custom_minimum_size = Vector2(175, 54)
 layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
 theme_override_colors/font_disabled_color = Color(0.35, 0.37, 0.42, 1)
-theme_override_font_sizes/font_size = 19
+theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("StyleBox_action")
 theme_override_styles/pressed = SubResource("StyleBox_action_hover")
 theme_override_styles/hover = SubResource("StyleBox_action_hover")
 theme_override_styles/disabled = SubResource("StyleBox_action_disabled")
 theme_override_styles/focus = SubResource("StyleBox_action_hover")
 text = "Roll Dice"
-
-[node name="EndTurnButton" type="Button" parent="GameUI/Actions" unique_id=1557973272]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(175, 62)
-layout_mode = 2
-theme_override_colors/font_disabled_color = Color(0.35, 0.37, 0.42, 1)
-theme_override_font_sizes/font_size = 19
-theme_override_styles/normal = SubResource("StyleBox_action")
-theme_override_styles/pressed = SubResource("StyleBox_action_hover")
-theme_override_styles/hover = SubResource("StyleBox_action_hover")
-theme_override_styles/disabled = SubResource("StyleBox_action_disabled")
-theme_override_styles/focus = SubResource("StyleBox_action_hover")
-text = "End Turn"

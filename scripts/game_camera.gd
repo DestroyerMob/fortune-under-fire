@@ -23,6 +23,10 @@ var _smoothed_focus_position := Vector3.ZERO
 var _movement_blend := 0.0
 var _time_since_target_moved := 0.0
 var _target_is_moving := false
+var _event_hold_generation := 0
+var _event_hold_active := false
+var _pending_turn_target: Node3D
+var _pending_turn_snap := false
 
 
 func _ready() -> void:
@@ -50,12 +54,49 @@ func _process(delta: float) -> void:
 ## Call this when the active turn changes. The local account's TargetMode is
 ## applied here, so ALL_TURNS follows humans and AI without special cases.
 func focus_turn_target(turn_target: Node3D, snap := false) -> void:
+	if _event_hold_active:
+		_pending_turn_target = turn_target
+		_pending_turn_snap = snap
+		return
 	if settings.target_mode == CameraSettings.TargetMode.LOCAL_PLAYER_ONLY:
 		if is_instance_valid(local_player):
 			track_target(local_player, snap)
 		return
 
 	track_target(turn_target, snap)
+
+
+## Keeps an important event on-screen even if the match advances to another
+## turn meanwhile. The latest requested turn target is restored after the hold.
+func hold_event_target(event_target: Node3D, duration: float) -> void:
+	if not is_instance_valid(event_target) or duration <= 0.0:
+		return
+	var was_holding := _event_hold_active
+	_event_hold_generation += 1
+	var generation := _event_hold_generation
+	_event_hold_active = true
+	if not was_holding:
+		_pending_turn_target = null
+		_pending_turn_snap = false
+	track_target(event_target)
+	_release_event_hold_after(duration, generation)
+
+
+func is_holding_event_target() -> bool:
+	return _event_hold_active
+
+
+func _release_event_hold_after(duration: float, generation: int) -> void:
+	await get_tree().create_timer(duration).timeout
+	if generation != _event_hold_generation:
+		return
+	_event_hold_active = false
+	var next_target := _pending_turn_target
+	var should_snap := _pending_turn_snap
+	_pending_turn_target = null
+	_pending_turn_snap = false
+	if is_instance_valid(next_target):
+		focus_turn_target(next_target, should_snap)
 
 
 ## Low-level focus method for cutscenes, selection previews, and spectators.

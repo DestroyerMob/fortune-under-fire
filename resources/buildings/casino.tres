@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="BuildingData" format=3 uid="uid://bo7j8d1rgh7ih"]
+
+[ext_resource type="Script" uid="uid://1326l852h28x" path="res://scripts/building_data.gd" id="1_building"]
+
+[resource]
+script = ExtResource("1_building")
+building_id = &"casino"
+display_name = "Casino"
+description = "Rolls a six-sided die for a variable payout whenever the owner passes Start."
+type = 2
+build_cost = 160
+money_value = 15
+color = Color(0.82, 0.3, 0.74, 1)
