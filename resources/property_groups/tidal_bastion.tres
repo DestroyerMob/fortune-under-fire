@@ -4,6 +4,11 @@
 
 [resource]
 script = ExtResource("1_group")
+group_id = &"tidal_bastion"
 display_name = "Tidal Bastion"
 color = Color(0.08, 0.67, 0.75, 1)
 value = 225
+control_bonus = 2
+control_bonus_name = "Guided Current"
+control_bonus_description = "Once per turn after rolling, move one space more or less."
+control_bonus_value = 1

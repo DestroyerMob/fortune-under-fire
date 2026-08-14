@@ -4,6 +4,11 @@
 
 [resource]
 script = ExtResource("1_group")
+group_id = &"royal_foundry"
 display_name = "Royal Foundry"
 color = Color(0.99, 0.77, 0.1, 1)
 value = 175
+control_bonus = 7
+control_bonus_name = "Masterwork Commission"
+control_bonus_description = "Choose one temporary building module at the beginning of each lap."
+control_bonus_value = 30

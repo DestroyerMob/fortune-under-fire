@@ -6,7 +6,7 @@
 script = ExtResource("1_card")
 card_id = &"emergency_transfer"
 display_name = "Hospital Run"
-description = "Move forward to the nearest hospital. Passing Start still pays."
+description = "Once per round, move forward to the nearest hospital. Passing Start still pays."
 type = 1
 effect = 2
 color = Color(0.12, 0.52, 0.5, 1)

@@ -54,6 +54,17 @@ func configure(
 	refresh()
 
 
+func set_local_player(local_player: Entity) -> void:
+	if is_instance_valid(_local_player):
+		if _local_player.money_changed.is_connected(_on_local_money_changed):
+			_local_player.money_changed.disconnect(_on_local_money_changed)
+	_local_player = local_player
+	if is_instance_valid(_local_player):
+		if not _local_player.money_changed.is_connected(_on_local_money_changed):
+			_local_player.money_changed.connect(_on_local_money_changed)
+	refresh()
+
+
 func _process(_delta: float) -> void:
 	if _configured:
 		_update_panel_position()

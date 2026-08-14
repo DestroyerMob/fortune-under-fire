@@ -4,6 +4,10 @@
 
 [resource]
 script = ExtResource("1_group")
+group_id = &"obsidian_crown"
 display_name = "Obsidian Crown"
 color = Color(0.52, 0.37, 0.97, 1)
 value = 300
+control_bonus = 4
+control_bonus_name = "Sovereign Claim"
+control_bonus_description = "Once per lap, initiate a protected hostile auction for eligible enemy land."

@@ -74,6 +74,7 @@ func configure(
 	_game_manager.rent_paid.connect(_on_rent_paid)
 	_game_manager.bank_transaction_completed.connect(_on_bank_transaction)
 	_game_manager.bank_interest_credited.connect(_on_bank_interest)
+	_game_manager.complete_sets_changed.connect(_on_complete_sets_changed)
 	_local_player.money_changed.connect(_on_money_changed)
 	_bank_amount.value_changed.connect(_on_bank_amount_changed)
 	_deposit_button.pressed.connect(_on_deposit_pressed)
@@ -82,6 +83,19 @@ func configure(
 		plot.building_changed.connect(_on_plot_building_changed.bind(plot))
 		plot.bank_balance_changed.connect(_on_bank_balance_changed.bind(plot))
 	_populate()
+	refresh()
+
+
+func set_local_player(local_player: Entity) -> void:
+	if is_instance_valid(_local_player):
+		if _local_player.money_changed.is_connected(_on_money_changed):
+			_local_player.money_changed.disconnect(_on_money_changed)
+	_local_player = local_player
+	_selected_property = _property_rail.get_selected_property()
+	if is_instance_valid(_local_player):
+		if not _local_player.money_changed.is_connected(_on_money_changed):
+			_local_player.money_changed.connect(_on_money_changed)
+	_cancel_bank_delta()
 	refresh()
 
 
@@ -96,6 +110,7 @@ func refresh() -> void:
 		and _game_manager.get_active_entity() == _local_player
 		and not _local_player.is_defeated()
 		and not _game_manager.is_turn_resolving()
+		and not _game_manager.has_pending_movement_adjustment()
 		and not _game_manager.has_pending_landing_action()
 		and selected_property.plot_owner == _local_player
 	)
@@ -132,10 +147,20 @@ func refresh() -> void:
 		var building: BuildingData
 		if button.has_meta(&"building"):
 			building = button.get_meta(&"building") as BuildingData
+		var building_cost := _game_manager.get_building_cost(
+			_local_player,
+			building
+		)
+		if building != null:
+			button.text = "%s   $%d\n%s" % [
+				building.display_name,
+				building_cost,
+				building.get_effect_summary(),
+			]
 		button.disabled = (
 			has_building
 			or building == null
-			or _local_player.money < building.build_cost
+			or _local_player.money < building_cost
 		)
 
 
@@ -274,6 +299,14 @@ func _on_building_constructed(
 	_cost: int
 ) -> void:
 	refresh()
+
+
+func _on_complete_sets_changed(
+	entity: Entity,
+	_controlled_sets: Array[PropertyGroupData]
+) -> void:
+	if entity == _local_player:
+		refresh()
 
 
 func _on_plot_building_changed(

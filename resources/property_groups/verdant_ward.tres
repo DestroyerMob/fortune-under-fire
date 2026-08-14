@@ -4,6 +4,11 @@
 
 [resource]
 script = ExtResource("1_group")
+group_id = &"verdant_ward"
 display_name = "Verdant Ward"
 color = Color(0.22, 0.7, 0.3, 1)
 value = 125
+control_bonus = 1
+control_bonus_name = "Living Ward"
+control_bonus_description = "Gain one Ward each lap; it halves the next building attack against you."
+control_bonus_value = 50

@@ -7,6 +7,7 @@ var _local_player: Entity
 var _turn_label: Label
 var _roll_result_label: Label
 var _turn_action_button: Button
+var _show_local_player_name := false
 
 
 func configure(
@@ -32,8 +33,21 @@ func configure(
 	_game_manager.rent_paid.connect(_on_rent_paid)
 	_game_manager.card_play_started.connect(_on_card_play_started)
 	_game_manager.card_played.connect(_on_card_played)
+	_game_manager.upcoming_roll_revealed.connect(_on_upcoming_roll_revealed)
+	_game_manager.movement_adjustment_required.connect(
+		_on_movement_adjustment_required
+	)
+	_game_manager.movement_adjustment_resolved.connect(
+		_on_movement_adjustment_resolved
+	)
 	_game_manager.participant_eliminated.connect(_on_participant_eliminated)
 	_game_manager.match_finished.connect(_on_match_finished)
+	refresh()
+
+
+func set_local_player(local_player: Entity, show_player_name := false) -> void:
+	_local_player = local_player
+	_show_local_player_name = show_player_name
 	refresh()
 
 
@@ -52,6 +66,7 @@ func refresh() -> void:
 	var is_resolving := _game_manager.is_turn_resolving()
 	var has_rolled := _game_manager.has_active_entity_rolled()
 	var can_roll := _game_manager.has_roll_available()
+	var choosing_movement := _game_manager.has_pending_movement_adjustment()
 	_turn_action_button.visible = (
 		_game_manager.state == GameManager.MatchState.ACTIVE
 		and is_local_turn
@@ -59,15 +74,20 @@ func refresh() -> void:
 	_turn_action_button.disabled = (
 		not is_local_turn
 		or is_resolving
+		or choosing_movement
 		or (can_roll and _game_manager.has_pending_landing_action())
 	)
 	_turn_action_button.text = (
 		"Moving…"
 		if is_resolving
 		else (
-			("Roll Again" if has_rolled else "Roll Dice")
-			if can_roll
-			else "End Turn"
+			"Choose Movement"
+			if choosing_movement
+			else (
+				("Roll Again" if has_rolled else "Roll Dice")
+				if can_roll
+				else "End Turn"
+			)
 		)
 	)
 
@@ -83,7 +103,11 @@ func _on_turn_started(
 		"Eliminated  ·  Spectating %s" % participant_name
 		if _local_player.is_defeated()
 		else (
-			"Round %d  ·  Your Turn" % round_number
+			(
+				"Round %d  ·  %s's Turn" % [round_number, entity.get_display_name()]
+				if _show_local_player_name
+				else "Round %d  ·  Your Turn" % round_number
+			)
 			if entity == _local_player
 			else "Round %d  ·  %s" % [round_number, participant_name]
 		)
@@ -107,6 +131,33 @@ func _on_dice_rolled(entity: Entity, dice_values: Array[int]) -> void:
 		]
 	)
 	_roll_result_label.show()
+	refresh()
+
+
+func _on_upcoming_roll_revealed(entity: Entity, dice_values: Array[int]) -> void:
+	if entity != _local_player or dice_values.size() != 2:
+		return
+	_roll_result_label.text = "Forecast  %d + %d = %d" % [
+		dice_values[0],
+		dice_values[1],
+		dice_values[0] + dice_values[1],
+	]
+	_roll_result_label.show()
+
+
+func _on_movement_adjustment_required(
+	_entity: Entity,
+	_dice_values: Array[int],
+	_maximum_adjustment: int
+) -> void:
+	refresh()
+
+
+func _on_movement_adjustment_resolved(
+	_entity: Entity,
+	_adjustment: int,
+	_movement_total: int
+) -> void:
 	refresh()
 
 

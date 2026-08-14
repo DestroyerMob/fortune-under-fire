@@ -78,7 +78,14 @@ func purchase(entity: Entity) -> bool:
 	return true
 
 
-func can_construct_building(entity: Entity, building_data: BuildingData) -> bool:
+func can_construct_building(
+	entity: Entity,
+	building_data: BuildingData,
+	cost_override := -1
+) -> bool:
+	var effective_cost := (
+		cost_override if cost_override >= 0 else building_data.build_cost
+	) if building_data != null else 0
 	return (
 		is_instance_valid(entity)
 		and plot_owner == entity
@@ -86,18 +93,25 @@ func can_construct_building(entity: Entity, building_data: BuildingData) -> bool
 		and building_data != null
 		and data != null
 		and data.is_ownable()
-		and entity.money >= building_data.build_cost
+		and entity.money >= effective_cost
 	)
 
 
-func construct_building(entity: Entity, building_data: BuildingData) -> bool:
+func construct_building(
+	entity: Entity,
+	building_data: BuildingData,
+	cost_override := -1
+) -> bool:
+	var effective_cost := (
+		cost_override if cost_override >= 0 else building_data.build_cost
+	) if building_data != null else 0
 	if (
-		not can_construct_building(entity, building_data)
-		or not entity.spend_money(building_data.build_cost)
+		not can_construct_building(entity, building_data, effective_cost)
+		or not entity.spend_money(effective_cost)
 	):
 		return false
 	set_building(building_data)
-	building_constructed.emit(entity, building_data, building_data.build_cost)
+	building_constructed.emit(entity, building_data, effective_cost)
 	return true
 
 

@@ -4,6 +4,10 @@
 
 [resource]
 script = ExtResource("1_group")
+group_id = &"arcane_reach"
 display_name = "Arcane Reach"
 color = Color(0.61, 0.21, 0.71, 1)
 value = 200
+control_bonus = 3
+control_bonus_name = "Intelligence Network"
+control_bonus_description = "Reveal your upcoming roll before your pre-roll decisions."

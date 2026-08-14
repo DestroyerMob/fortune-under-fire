@@ -6,12 +6,17 @@ extends Node
 signal activation_resolved(activation: BuildingActivation)
 
 var _board: Board
+var _set_bonus_system: SetBonusSystem
 var _rng := RandomNumberGenerator.new()
 
 
 func configure(board: Board) -> void:
 	_board = board
 	_rng.randomize()
+
+
+func set_set_bonus_system(set_bonus_system: SetBonusSystem) -> void:
+	_set_bonus_system = set_bonus_system
 
 
 ## Resolves buildings that activate when their owner completes a lap and returns
@@ -127,7 +132,17 @@ func _apply_damage(
 ) -> int:
 	if requested_damage <= 0 or target.is_defeated():
 		return 0
-	var dealt_damage := target.take_damage(requested_damage)
+	var resolved_damage := requested_damage
+	if is_instance_valid(_set_bonus_system):
+		resolved_damage = _set_bonus_system.modify_outgoing_damage(
+			owner,
+			resolved_damage
+		)
+		resolved_damage = _set_bonus_system.modify_incoming_damage(
+			target,
+			resolved_damage
+		)
+	var dealt_damage := target.take_damage(resolved_damage)
 	if dealt_damage > 0:
 		activation_resolved.emit(BuildingActivation.new(
 			BuildingActivation.EffectKind.DAMAGE,

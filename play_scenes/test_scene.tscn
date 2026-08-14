@@ -13,8 +13,8 @@
 [ext_resource type="Resource" path="res://resources/buildings/gun_tower.tres" id="10_gun_tower"]
 [ext_resource type="Resource" path="res://resources/buildings/artillery_battery.tres" id="11_artillery"]
 [ext_resource type="Resource" path="res://resources/buildings/tesla_coil.tres" id="12_tesla"]
-[ext_resource type="Resource" path="res://resources/buildings/medic_tower.tres" id="13_medic"]
 [ext_resource type="Resource" path="res://resources/buildings/bank.tres" id="13_bank"]
+[ext_resource type="Resource" path="res://resources/buildings/medic_tower.tres" id="13_medic"]
 [ext_resource type="Script" uid="uid://47cbtcq7v7l5" path="res://scripts/presentation/local_player_hud_controller.gd" id="14_local_hud"]
 [ext_resource type="Script" uid="uid://d1mr6svb32qfc" path="res://scripts/presentation/turn_hud_controller.gd" id="15_turn_hud"]
 [ext_resource type="Script" uid="uid://1bex4k0ck68v" path="res://scripts/presentation/world_action_controller.gd" id="16_world_actions"]
@@ -24,8 +24,13 @@
 [ext_resource type="Script" uid="uid://dl17kb0d0fbvo" path="res://scripts/gameplay/property_action_system.gd" id="20_property_actions"]
 [ext_resource type="Script" uid="uid://d4yycfduphak" path="res://scripts/gameplay/ai_turn_controller.gd" id="21_ai_turn"]
 [ext_resource type="Script" uid="uid://gvmgtjfqka4q" path="res://scripts/presentation/turn_camera_controller.gd" id="22_turn_camera"]
-[ext_resource type="Script" path="res://scripts/presentation/card_hand_controller.gd" id="23_card_hand"]
-[ext_resource type="Script" path="res://scripts/gameplay/card_effect_system.gd" id="24_card_effects"]
+[ext_resource type="Script" uid="uid://03k3rharac5i" path="res://scripts/presentation/card_hand_controller.gd" id="23_card_hand"]
+[ext_resource type="Script" uid="uid://b6jo31n3px7ek" path="res://scripts/gameplay/card_effect_system.gd" id="24_card_effects"]
+[ext_resource type="Script" uid="uid://b0dcqp2cikmk4" path="res://scripts/gameplay/set_bonus_system.gd" id="25_set_bonuses"]
+[ext_resource type="Script" uid="uid://bh8sqtsudkwuu" path="res://scripts/presentation/set_bonus_hud_controller.gd" id="26_set_bonus_hud"]
+[ext_resource type="Script" uid="uid://cku02go6f4bsq" path="res://scripts/presentation/local_seat_controller.gd" id="27_local_seat"]
+[ext_resource type="Script" uid="uid://ve43abwubq44" path="res://scripts/presentation/developer_tools_controller.gd" id="28_dev_tools"]
+[ext_resource type="Resource" path="res://resources/card_selectors/tactics_deck.tres" id="29_tactics_deck"]
 
 [sub_resource type="Environment" id="Environment_depth"]
 background_mode = 1
@@ -80,27 +85,13 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
-[sub_resource type="StyleBoxFlat" id="StyleBox_world_action"]
-bg_color = Color(0.035, 0.045, 0.065, 0.97)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 0.72, 0.24, 0.95)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-shadow_color = Color(0, 0, 0, 0.55)
-shadow_size = 8
-
-[sub_resource type="StyleBoxFlat" id="StyleBox_action"]
-bg_color = Color(0.12, 0.15, 0.21, 0.96)
+[sub_resource type="StyleBoxFlat" id="StyleBox_action_secondary"]
+bg_color = Color(0.09, 0.105, 0.135, 0.96)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.76, 0.58, 0.22, 0.85)
+border_color = Color(0.36, 0.39, 0.46, 0.9)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
@@ -118,20 +109,34 @@ corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBox_action_disabled"]
-bg_color = Color(0.07, 0.08, 0.1, 0.72)
+[sub_resource type="StyleBoxFlat" id="StyleBox_action"]
+bg_color = Color(0.12, 0.15, 0.21, 0.96)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.76, 0.58, 0.22, 0.85)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
 corner_radius_bottom_left = 8
 
-[sub_resource type="StyleBoxFlat" id="StyleBox_action_secondary"]
-bg_color = Color(0.09, 0.105, 0.135, 0.96)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.36, 0.39, 0.46, 0.9)
+[sub_resource type="StyleBoxFlat" id="StyleBox_world_action"]
+bg_color = Color(0.035, 0.045, 0.065, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.72, 0.24, 0.95)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.55)
+shadow_size = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_action_disabled"]
+bg_color = Color(0.07, 0.08, 0.1, 0.72)
 corner_radius_top_left = 8
 corner_radius_top_right = 8
 corner_radius_bottom_right = 8
@@ -189,6 +194,7 @@ script = ExtResource("5_game_manager")
 board = NodePath("../Board")
 participants = [NodePath("../Player"), NodePath("../Player2"), NodePath("../Player3"), NodePath("../Player4")]
 available_buildings = Array[ExtResource("7_edu8g")]([ExtResource("7_apartments"), ExtResource("8_hotel"), ExtResource("9_casino"), ExtResource("13_bank"), ExtResource("10_gun_tower"), ExtResource("11_artillery"), ExtResource("12_tesla"), ExtResource("13_medic")])
+debug_card_selector = ExtResource("29_tactics_deck")
 auto_start = false
 
 [node name="PropertyActionSystem" type="Node" parent="GameManager" unique_id=344338881]
@@ -197,8 +203,11 @@ script = ExtResource("20_property_actions")
 [node name="AiTurnController" type="Node" parent="GameManager" unique_id=1408427316]
 script = ExtResource("21_ai_turn")
 
-[node name="CardEffectSystem" type="Node" parent="GameManager"]
+[node name="CardEffectSystem" type="Node" parent="GameManager" unique_id=680089717]
 script = ExtResource("24_card_effects")
+
+[node name="SetBonusSystem" type="Node" parent="GameManager" unique_id=991047339]
+script = ExtResource("25_set_bonuses")
 
 [node name="PresentationSystems" type="Node" parent="." unique_id=357150827]
 
@@ -230,9 +239,21 @@ script = ExtResource("19_feedback")
 unique_name_in_owner = true
 script = ExtResource("22_turn_camera")
 
-[node name="CardHandController" type="Node" parent="PresentationSystems"]
+[node name="CardHandController" type="Node" parent="PresentationSystems" unique_id=1401015645]
 unique_name_in_owner = true
 script = ExtResource("23_card_hand")
+
+[node name="SetBonusHudController" type="Node" parent="PresentationSystems" unique_id=1494847720]
+unique_name_in_owner = true
+script = ExtResource("26_set_bonus_hud")
+
+[node name="LocalSeatController" type="Node" parent="PresentationSystems" unique_id=1951840163]
+unique_name_in_owner = true
+script = ExtResource("27_local_seat")
+
+[node name="DeveloperToolsController" type="Node" parent="PresentationSystems" unique_id=1941167621]
+unique_name_in_owner = true
+script = ExtResource("28_dev_tools")
 
 [node name="GameUI" type="CanvasLayer" parent="." unique_id=1436480236]
 
@@ -337,7 +358,144 @@ theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 15
 horizontal_alignment = 2
+
+[node name="DevToastLabel" type="Label" parent="GameUI" unique_id=1565229768]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -180.0
+offset_top = 58.0
+offset_right = 180.0
+offset_bottom = 88.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.42, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 14
+text = "DEV  ·  +CARD"
+horizontal_alignment = 1
 vertical_alignment = 1
+
+[node name="SetBonusSummaryPanel" type="PanelContainer" parent="GameUI" unique_id=619017064]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -320.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 78.0
+grow_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBox_hud_panel")
+
+[node name="Margin" type="MarginContainer" parent="GameUI/SetBonusSummaryPanel" unique_id=785518278]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 7
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 7
+
+[node name="Content" type="VBoxContainer" parent="GameUI/SetBonusSummaryPanel/Margin" unique_id=846166356]
+layout_mode = 2
+theme_override_constants/separation = 1
+
+[node name="Header" type="Label" parent="GameUI/SetBonusSummaryPanel/Margin/Content" unique_id=1440262967]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.69, 0.61, 0.43, 1)
+theme_override_font_sizes/font_size = 10
+text = "SET POWERS"
+
+[node name="SetBonusSummaryLabel" type="Label" parent="GameUI/SetBonusSummaryPanel/Margin/Content" unique_id=577131855]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.92, 0.96, 1)
+theme_override_font_sizes/font_size = 12
+text = "Industrial Efficiency"
+text_overrun_behavior = 3
+
+[node name="GuidedCurrentPanel" type="PanelContainer" parent="GameUI" unique_id=1929930636]
+unique_name_in_owner = true
+visible = false
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -320.0
+offset_top = -230.0
+offset_right = -20.0
+offset_bottom = -116.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBox_hud_panel")
+
+[node name="Margin" type="MarginContainer" parent="GameUI/GuidedCurrentPanel" unique_id=72020705]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="Content" type="VBoxContainer" parent="GameUI/GuidedCurrentPanel/Margin" unique_id=915465557]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Title" type="Label" parent="GameUI/GuidedCurrentPanel/Margin/Content" unique_id=1627438271]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.35, 0.88, 0.94, 1)
+theme_override_font_sizes/font_size = 12
+text = "GUIDED CURRENT"
+
+[node name="GuidedCurrentDetails" type="Label" parent="GameUI/GuidedCurrentPanel/Margin/Content" unique_id=171697345]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.79, 0.86, 1)
+theme_override_font_sizes/font_size = 12
+text = "Choose your movement total."
+
+[node name="Choices" type="HBoxContainer" parent="GameUI/GuidedCurrentPanel/Margin/Content" unique_id=5805016]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="GuidedCurrentMinusButton" type="Button" parent="GameUI/GuidedCurrentPanel/Margin/Content/Choices" unique_id=1848844933]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(86, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBox_action_secondary")
+theme_override_styles/pressed = SubResource("StyleBox_action_hover")
+theme_override_styles/hover = SubResource("StyleBox_action_hover")
+text = "−1"
+
+[node name="GuidedCurrentKeepButton" type="Button" parent="GameUI/GuidedCurrentPanel/Margin/Content/Choices" unique_id=1127454192]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(86, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBox_action")
+theme_override_styles/pressed = SubResource("StyleBox_action_hover")
+theme_override_styles/hover = SubResource("StyleBox_action_hover")
+text = "KEEP"
+
+[node name="GuidedCurrentPlusButton" type="Button" parent="GameUI/GuidedCurrentPanel/Margin/Content/Choices" unique_id=1952063995]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(86, 48)
+layout_mode = 2
+size_flags_horizontal = 3
+focus_mode = 0
+theme_override_font_sizes/font_size = 11
+theme_override_styles/normal = SubResource("StyleBox_action_secondary")
+theme_override_styles/pressed = SubResource("StyleBox_action_hover")
+theme_override_styles/hover = SubResource("StyleBox_action_hover")
+text = "+1"
 
 [node name="OwnedPropertiesRail" type="Control" parent="GameUI" unique_id=36306125]
 unique_name_in_owner = true
@@ -500,7 +658,7 @@ theme_override_colors/font_color = Color(0.61, 0.65, 0.73, 1)
 theme_override_font_sizes/font_size = 13
 text = "Unbuilt"
 
-[node name="BuildingDescriptionLabel" type="Label" parent="GameUI/BuildingPalette/Margin/Content"]
+[node name="BuildingDescriptionLabel" type="Label" parent="GameUI/BuildingPalette/Margin/Content" unique_id=1592222588]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -524,31 +682,31 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 5
 
-[node name="BankControls" type="VBoxContainer" parent="GameUI/BuildingPalette/Margin/Content"]
+[node name="BankControls" type="VBoxContainer" parent="GameUI/BuildingPalette/Margin/Content" unique_id=1006868878]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="BankBalanceLabel" type="Label" parent="GameUI/BuildingPalette/Margin/Content/BankControls"]
+[node name="BankBalanceLabel" type="Label" parent="GameUI/BuildingPalette/Margin/Content/BankControls" unique_id=1557303956]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.79, 0.31, 1)
 theme_override_font_sizes/font_size = 18
 text = "STORED  $0"
 
-[node name="BankInterestLabel" type="Label" parent="GameUI/BuildingPalette/Margin/Content/BankControls"]
+[node name="BankInterestLabel" type="Label" parent="GameUI/BuildingPalette/Margin/Content/BankControls" unique_id=1148643807]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.61, 0.65, 0.73, 1)
 theme_override_font_sizes/font_size = 12
 text = "10% interest when you pass Start"
 
-[node name="Amount" type="HBoxContainer" parent="GameUI/BuildingPalette/Margin/Content/BankControls"]
+[node name="Amount" type="HBoxContainer" parent="GameUI/BuildingPalette/Margin/Content/BankControls" unique_id=1048378900]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Label" type="Label" parent="GameUI/BuildingPalette/Margin/Content/BankControls/Amount"]
+[node name="Label" type="Label" parent="GameUI/BuildingPalette/Margin/Content/BankControls/Amount" unique_id=662329032]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.61, 0.65, 0.73, 1)
@@ -556,7 +714,7 @@ theme_override_font_sizes/font_size = 12
 text = "AMOUNT"
 vertical_alignment = 1
 
-[node name="BankAmount" type="SpinBox" parent="GameUI/BuildingPalette/Margin/Content/BankControls/Amount"]
+[node name="BankAmount" type="SpinBox" parent="GameUI/BuildingPalette/Margin/Content/BankControls/Amount" unique_id=1205658641]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(126, 36)
 layout_mode = 2
@@ -566,11 +724,11 @@ step = 10.0
 value = 100.0
 allow_greater = true
 
-[node name="Buttons" type="HBoxContainer" parent="GameUI/BuildingPalette/Margin/Content/BankControls"]
+[node name="Buttons" type="HBoxContainer" parent="GameUI/BuildingPalette/Margin/Content/BankControls" unique_id=740613254]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="BankDepositButton" type="Button" parent="GameUI/BuildingPalette/Margin/Content/BankControls/Buttons"]
+[node name="BankDepositButton" type="Button" parent="GameUI/BuildingPalette/Margin/Content/BankControls/Buttons" unique_id=1342910909]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(108, 40)
 layout_mode = 2
@@ -586,7 +744,7 @@ theme_override_styles/disabled = SubResource("StyleBox_action_disabled")
 theme_override_styles/focus = SubResource("StyleBox_action_hover")
 text = "Deposit  $100"
 
-[node name="BankWithdrawButton" type="Button" parent="GameUI/BuildingPalette/Margin/Content/BankControls/Buttons"]
+[node name="BankWithdrawButton" type="Button" parent="GameUI/BuildingPalette/Margin/Content/BankControls/Buttons" unique_id=1301250553]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(108, 40)
 layout_mode = 2
@@ -602,23 +760,24 @@ theme_override_styles/disabled = SubResource("StyleBox_action_disabled")
 theme_override_styles/focus = SubResource("StyleBox_action_hover")
 text = "Withdraw  $100"
 
-[node name="CardHand" type="Control" parent="GameUI"]
+[node name="CardHand" type="Control" parent="GameUI" unique_id=20129165]
 unique_name_in_owner = true
 visible = false
+layout_mode = 3
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -360.0
-offset_top = -128.0
+offset_top = -270.0
 offset_right = 360.0
-offset_bottom = -20.0
+offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 0
 mouse_filter = 2
 
-[node name="CardList" type="HBoxContainer" parent="GameUI/CardHand"]
+[node name="CardList" type="HBoxContainer" parent="GameUI/CardHand" unique_id=511818234]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -626,7 +785,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 14
 alignment = 1
 
 [node name="Actions" type="HBoxContainer" parent="GameUI" unique_id=1567847190]

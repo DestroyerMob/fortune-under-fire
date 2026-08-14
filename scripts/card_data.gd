@@ -2,6 +2,7 @@ class_name CardData
 extends Resource
 
 enum CardType {TACTIC, MOVEMENT, SUPPORT}
+enum TargetMode {SELF, PROPERTY}
 
 enum EffectType {
 	END_TURN_WITHOUT_ROLL,
@@ -14,6 +15,9 @@ enum EffectType {
 @export_multiline var description := ""
 @export var type: CardType = CardType.TACTIC
 @export var effect: EffectType = EffectType.END_TURN_WITHOUT_ROLL
+## SELF cards are released into the centre cast zone. PROPERTY cards must be
+## released over an ownable board plot before gameplay authority accepts them.
+@export var target_mode: TargetMode = TargetMode.SELF
 @export_group("Presentation")
 @export var color := Color(0.0, 0.0, 0.0, 0.0)
 

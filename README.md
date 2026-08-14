@@ -37,8 +37,14 @@ it whenever a subsystem boundary or public contract changes.
   dedicated property-action, building-effect, AI-policy, and presentation
   systems handle their own responsibilities behind it.
 - Entities begin each match with 100 health and 1,200 money.
-- The game opens on a main menu with a two-to-four-player setup. Player 1 is
-  human-controlled and every remaining participant is AI-controlled.
+- The game opens on a clean 2D main menu with its right-hand stage reserved for
+  a future 3D background animation. Play opens the two-to-four-participant
+  setup; Settings exposes saved camera and developer preferences. Any number of
+  match seats can be local humans on one device; remaining seats are AI.
+- Multi-human turns begin immediately and atomically switch health, funds,
+  deeds, building controls, set powers, cards, camera context, and the shared
+  Roll/End Turn action to that player. The persistent turn label names the
+  human who currently has control.
 - The game HUD exposes one Turn Action button that changes from Roll Dice to
   End Turn after rolling. The compact top-left status displays health and
   funds, the active turn sits at the top centre, and the latest dice result is
@@ -81,11 +87,11 @@ also the correct mode for spectating a fully AI game.
 local entity. The lower-level `track_target()` method deliberately ignores that
 preference for cutscenes and spectator controls.
 
-Camera settings are local presentation preferences. They should be saved with
-the local account/profile and must not be synchronized as authoritative match
-state. The default resource is `res://resources/default_camera_settings.tres`;
-an account settings system can duplicate it and replace the camera's `settings`
-resource with the saved profile values.
+Camera settings are local presentation preferences and are not synchronized as
+authoritative match state. The Settings menu saves follow-all-turns and dynamic
+movement choices to `user://settings.cfg`. `GameScreen` duplicates
+`res://resources/default_camera_settings.tres` and applies those preferences
+before starting each match.
 
 ## Movement
 
@@ -101,6 +107,12 @@ In the game scene, Space and the single Turn Action button share the
 `turn_action` input path. Before the active entity rolls, the action is labelled
 Roll Dice and starts movement. After movement finishes, the same action changes
 to End Turn and advances to the next participant.
+
+Developer options are off by default and can be enabled from Settings. While
+enabled, pressing `C` during an active human turn grants that active player one
+random card from the tactics deck and shows a compact confirmation. The input
+routes through `GameManager.debug_grant_random_card()`, so it cannot grant to an
+AI, a defeated entity, or an inactive participant.
 
 The board emits `past_start(entity)` once for every completed lap after awarding
 base property income and lap-building bonuses, but before destination landing.
@@ -242,27 +254,29 @@ default value; each concrete plot can override its own rent and purchase price.
 The raised `Top` mesh uses the group colour; the lower mesh keeps the single
 shared board-base material.
 
-The initial groups are:
+The main-board groups and their global complete-control powers are:
 
-| Group | Value |
-| --- | ---: |
-| Ironworks | 100 |
-| Verdant Ward | 125 |
-| Ember Quarter | 150 |
-| Royal Foundry | 175 |
-| Arcane Reach | 200 |
-| Tidal Bastion | 225 |
-| Crimson Court | 250 |
-| Obsidian Crown | 300 |
+| Group | Value | Complete-control power |
+| --- | ---: | --- |
+| Ironworks | 100 | Industrial Efficiency |
+| Verdant Ward | 125 | Living Ward |
+| Tidal Bastion | 225 | Guided Current |
+| Arcane Reach | 200 | Intelligence Network |
+| Obsidian Crown | 300 | Sovereign Claim |
+| Crimson Court | 250 | Tribute |
+| Ember Quarter | 150 | Overcharge |
+| Royal Foundry | 175 | Masterwork Commission |
 
-Group resources live in `res://resources/property_groups/`. Future effects such
-as a completed-set damage bonus should be added to `PropertyGroupData`, then
-read by the combat or ownership system. This keeps the bonus out of individual
-plot nodes and ensures the entire set shares one authoritative value.
+Group resources live in `res://resources/property_groups/`. `PropertyGroupData`
+declares each power; `SetBonusSystem` derives complete control and owns its
+turn/lap uses. See `docs/PROPERTY_SETS.md` for the board order, intended rules,
+and implementation status.
 
 Each side of the 13×13 board contains five properties, one gold card plot, then
-five properties from the next group. The 11×11 version uses groups of four with
-the same central card plot.
+five properties from the next group. From Start the sides are Ironworks →
+Verdant Ward, Tidal Bastion → Arcane Reach, Obsidian Crown → Crimson Court, and
+Ember Quarter → Royal Foundry. The 11×11 scene remains a legacy compact board;
+it cannot complete the new five-property control condition.
 
 Card selection and card ownership are separate:
 
@@ -275,9 +289,17 @@ Card selection and card ownership are separate:
 
 Landing on a card plot asks its selector for a random card, calls
 `Entity.add_card()`, and emits both `Entity.card_added` and `Plot.card_awarded`
-so the bottom hand updates immediately. Rounded cards use the colour stored in
-their `CardData` resource (or a stable ID-derived fallback), show their rule and
-quantity, and disable themselves whenever their effect is not currently legal.
+so the bottom hand updates immediately. Portrait cards use the colour stored in
+their `CardData` resource (or a stable ID-derived fallback), with a type banner,
+quantity, title, suit panel, printed rule, and interaction footer. The hand
+rests mostly below the screen as a row of narrow coloured tabs and slides up only
+while that occupied area is hovered. A card is played by dragging it—not by
+clicking. Self-cast cards are released near the centre; cards whose data targets
+properties are released over an ownable board plot. These targets have no
+on-screen drop-zone panels. Every held card stays draggable. Releasing a card
+asks gameplay authority whether it can activate now: rejected attempts animate
+back into the hand, while accepted cards settle into their target and fly off
+screen before the effect resolves.
 
 The first playable deck contains:
 
@@ -285,7 +307,8 @@ The first playable deck contains:
 - **Overtime:** after a roll, grant one additional roll in the same turn.
 - **Hospital Run:** move forward along the real route to the nearest built Medic
   Tower. Crossing Start awards normal lap income and the destination still runs
-  its ordinary owner-only Medic activation.
+  its ordinary owner-only Medic activation. Each player can successfully use
+  Hospital Run only once per round; rejected extra attempts remain in hand.
 
 `CardSelector.draw_card()` also accepts a seeded
 `RandomNumberGenerator`; authoritative multiplayer match logic should provide

@@ -45,6 +45,16 @@ func configure(
 		plot.bank_balance_changed.connect(_on_bank_balance_changed.bind(plot))
 
 
+func set_local_player(local_player: Entity) -> void:
+	if _local_player == local_player:
+		refresh_owned_properties()
+		return
+	cancel_preview(false, false, true)
+	clear_selection()
+	_local_player = local_player
+	refresh_owned_properties()
+
+
 func refresh_owned_properties() -> void:
 	cancel_preview(true)
 	clear_selection()
@@ -85,6 +95,7 @@ func refresh_plot(plot: Plot) -> void:
 		var deed := slot.get_child(0) as Button
 		if deed != null and deed.has_meta(&"plot") and deed.get_meta(&"plot") == plot:
 			deed.text = _get_deed_text(plot, _board.plots.find(plot))
+			_refresh_deed_face(deed, plot)
 			return
 
 
@@ -128,7 +139,7 @@ func _create_deed(plot: Plot) -> Control:
 	deed.size = DEED_SIZE
 	deed.position.x = _get_hidden_deed_x()
 	deed.text = _get_deed_text(plot, plot_index)
-	deed.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	deed.clip_text = true
 	deed.focus_mode = Control.FOCUS_NONE
 	deed.toggle_mode = true
 	deed.tooltip_text = ""
@@ -136,6 +147,14 @@ func _create_deed(plot: Plot) -> Control:
 	deed.set_meta(&"plot", plot)
 	deed.add_theme_font_size_override(&"font_size", 13)
 	var deed_color := plot.data.get_top_color()
+	var hidden_text_color := Color(0.0, 0.0, 0.0, 0.0)
+	for color_name in [
+		&"font_color",
+		&"font_hover_color",
+		&"font_pressed_color",
+		&"font_focus_color",
+	]:
+		deed.add_theme_color_override(color_name, hidden_text_color)
 	deed.add_theme_stylebox_override(
 		&"normal", _create_deed_style(deed_color, false, false)
 	)
@@ -151,8 +170,113 @@ func _create_deed(plot: Plot) -> Control:
 	deed.mouse_entered.connect(_on_deed_mouse_entered.bind(deed, plot))
 	deed.mouse_exited.connect(_on_deed_mouse_exited.bind(deed, plot))
 	deed.pressed.connect(_on_deed_pressed.bind(deed, plot))
+	_build_deed_face(deed, plot, deed_color)
 	deed_slot.add_child(deed)
 	return deed_slot
+
+
+func _build_deed_face(deed: Button, plot: Plot, deed_color: Color) -> void:
+	var accent := ColorRect.new()
+	accent.name = "PropertyAccent"
+	accent.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	accent.color = deed_color.lightened(0.16)
+	deed.add_child(accent)
+	accent.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
+	accent.offset_left = -6.0
+	accent.offset_top = 7.0
+	accent.offset_right = -2.0
+	accent.offset_bottom = -7.0
+
+	var margin := MarginContainer.new()
+	margin.name = "FaceMargin"
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	deed.add_child(margin)
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override(&"margin_left", 12)
+	margin.add_theme_constant_override(&"margin_top", 7)
+	margin.add_theme_constant_override(&"margin_right", 18)
+	margin.add_theme_constant_override(&"margin_bottom", 7)
+
+	var rows := VBoxContainer.new()
+	rows.name = "Rows"
+	rows.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rows.add_theme_constant_override(&"separation", 1)
+	margin.add_child(rows)
+
+	var identity_row := HBoxContainer.new()
+	identity_row.name = "IdentityRow"
+	identity_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	identity_row.add_theme_constant_override(&"separation", 8)
+	rows.add_child(identity_row)
+	var property_name := Label.new()
+	property_name.name = "PropertyName"
+	property_name.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	property_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	property_name.add_theme_color_override(
+		&"font_color", Color(0.92, 0.94, 0.98, 1.0)
+	)
+	property_name.add_theme_font_size_override(&"font_size", 13)
+	property_name.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	identity_row.add_child(property_name)
+	var site_status := Label.new()
+	site_status.name = "SiteStatus"
+	site_status.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	site_status.custom_minimum_size = Vector2(108.0, 0.0)
+	site_status.add_theme_color_override(
+		&"font_color", deed_color.lightened(0.35)
+	)
+	site_status.add_theme_font_size_override(&"font_size", 10)
+	site_status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	site_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	identity_row.add_child(site_status)
+
+	var economy_row := HBoxContainer.new()
+	economy_row.name = "EconomyRow"
+	economy_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rows.add_child(economy_row)
+	var lap_income := Label.new()
+	lap_income.name = "LapIncome"
+	lap_income.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	lap_income.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lap_income.add_theme_color_override(
+		&"font_color", Color(0.66, 0.72, 0.8, 1.0)
+	)
+	lap_income.add_theme_font_size_override(&"font_size", 11)
+	economy_row.add_child(lap_income)
+	var rent := Label.new()
+	rent.name = "Rent"
+	rent.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rent.add_theme_color_override(
+		&"font_color", Color(0.66, 0.72, 0.8, 1.0)
+	)
+	rent.add_theme_font_size_override(&"font_size", 11)
+	rent.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	economy_row.add_child(rent)
+	_refresh_deed_face(deed, plot)
+
+
+func _refresh_deed_face(deed: Button, plot: Plot) -> void:
+	var face := deed.get_node_or_null("FaceMargin/Rows")
+	if face == null:
+		return
+	(face.get_node("IdentityRow/PropertyName") as Label).text = _get_plot_name(plot)
+	(face.get_node("IdentityRow/SiteStatus") as Label).text = (
+		_get_deed_site_status(plot)
+	)
+	(face.get_node("EconomyRow/LapIncome") as Label).text = (
+		"LAP  +$%d" % plot.get_base_rent()
+	)
+	(face.get_node("EconomyRow/Rent") as Label).text = (
+		"RENT  $%d" % plot.get_rent_value()
+	)
+
+
+func _get_deed_site_status(plot: Plot) -> String:
+	if plot.has_building_type(BuildingData.BuildingType.BANK):
+		return "BANK  ·  $%d" % plot.get_bank_balance()
+	if plot.building != null:
+		return plot.building.display_name.to_upper()
+	return "UNBUILT"
 
 
 func _get_deed_text(plot: Plot, _plot_index: int) -> String:
@@ -196,17 +320,16 @@ func _create_deed_style(
 	)
 	style.border_width_left = 1
 	style.border_width_top = 1
-	style.border_width_right = 9 if selected else 7
+	style.border_width_right = 1
 	style.border_width_bottom = 1
-	style.border_color = property_color.lightened(
-		0.3 if selected else (0.18 if hovered else 0.0)
-	)
-	style.corner_radius_top_left = 7
-	style.corner_radius_top_right = 7
-	style.corner_radius_bottom_right = 7
-	style.corner_radius_bottom_left = 7
-	style.content_margin_left = 12.0
-	style.content_margin_right = 10.0
+	style.border_color = property_color.lightened(0.28 if selected else 0.08)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_right = 8
+	style.corner_radius_bottom_left = 8
+	style.shadow_color = Color(0.0, 0.0, 0.0, 0.32)
+	style.shadow_size = 5 if hovered or selected else 2
+	style.shadow_offset = Vector2(1.0, 2.0)
 	return style
 
 

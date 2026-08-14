@@ -4,6 +4,11 @@
 
 [resource]
 script = ExtResource("1_group")
+group_id = &"ember_quarter"
 display_name = "Ember Quarter"
 color = Color(0.97, 0.4, 0.03, 1)
 value = 150
+control_bonus = 6
+control_bonus_name = "Overcharge"
+control_bonus_description = "Once per lap, your next attack-building activation deals 50% more damage."
+control_bonus_value = 50

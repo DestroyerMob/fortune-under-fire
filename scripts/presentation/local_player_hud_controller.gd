@@ -16,14 +16,24 @@ func configure(
 	health_bar: ProgressBar,
 	health_label: Label
 ) -> void:
-	_player = player
 	_money_label = money_label
 	_health_bar = health_bar
 	_health_label = health_label
-	if not _player.money_changed.is_connected(_on_money_changed):
-		_player.money_changed.connect(_on_money_changed)
-	if not _player.health_changed.is_connected(_on_health_changed):
-		_player.health_changed.connect(_on_health_changed)
+	set_player(player)
+
+
+func set_player(player: Entity) -> void:
+	if is_instance_valid(_player):
+		if _player.money_changed.is_connected(_on_money_changed):
+			_player.money_changed.disconnect(_on_money_changed)
+		if _player.health_changed.is_connected(_on_health_changed):
+			_player.health_changed.disconnect(_on_health_changed)
+	_player = player
+	if is_instance_valid(_player):
+		if not _player.money_changed.is_connected(_on_money_changed):
+			_player.money_changed.connect(_on_money_changed)
+		if not _player.health_changed.is_connected(_on_health_changed):
+			_player.health_changed.connect(_on_health_changed)
 	_refresh_money()
 	_refresh_health()
 

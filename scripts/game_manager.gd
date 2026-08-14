@@ -38,6 +38,7 @@ signal rent_paid(payer: Entity, owner: Entity, plot: Plot, amount: int)
 signal start_income_awarded(entity: Entity, amount: int)
 signal card_play_started(entity: Entity, card: CardData)
 signal card_played(result)
+signal debug_card_granted(entity: Entity, card: CardData)
 signal building_constructed(owner: Entity, plot: Plot, building: BuildingData, cost: int)
 signal building_activated(
 	owner: Entity,
@@ -58,6 +59,28 @@ signal bank_transaction_completed(
 	new_balance: int
 )
 signal bank_interest_credited(owner: Entity, plot: Plot, amount: int, new_balance: int)
+signal complete_sets_changed(
+	entity: Entity,
+	controlled_sets: Array[PropertyGroupData]
+)
+signal set_bonus_charge_changed(
+	entity: Entity,
+	group: PropertyGroupData,
+	charges: int
+)
+signal set_bonus_triggered(
+	entity: Entity,
+	group: PropertyGroupData,
+	amount: int,
+	context: StringName
+)
+signal upcoming_roll_revealed(entity: Entity, dice_values: Array[int])
+signal movement_adjustment_required(
+	entity: Entity,
+	dice_values: Array[int],
+	maximum_adjustment: int
+)
+signal movement_adjustment_resolved(entity: Entity, adjustment: int, movement_total: int)
 
 enum MatchState {LOBBY, ACTIVE, FINISHED}
 
@@ -68,6 +91,7 @@ const MAX_PARTICIPANTS := 4
 ## Ordered turn list. Invalid and duplicate entries are removed at match start.
 @export var participants: Array[Entity] = []
 @export var available_buildings: Array[BuildingData] = []
+@export var debug_card_selector: CardSelector
 @export_range(0, 1000, 1) var starting_plot_index := 0
 @export var auto_start := true
 @export var reset_entities_on_start := true
@@ -85,9 +109,13 @@ var _active_entity_has_rolled := false
 var _rolls_remaining := 0
 var _last_destination_index := -1
 var _turn_generation := 0
+var _prepared_dice_values: Array[int] = []
+var _pending_movement_dice: Array[int] = []
+var _hospital_run_round_by_entity: Dictionary[Entity, int] = {}
 var property_action_system: PropertyActionSystem
 var ai_turn_controller: AiTurnController
 var card_effect_system
+var set_bonus_system: SetBonusSystem
 
 
 func _ready() -> void:
@@ -114,6 +142,7 @@ func start_match() -> bool:
 	if not board.building_effect_resolved.is_connected(_on_board_building_effect_resolved):
 		board.building_effect_resolved.connect(_on_board_building_effect_resolved)
 	property_action_system.clear_pending_action()
+	_hospital_run_round_by_entity.clear()
 	board.reset_plot_ownership()
 	for participant in participants:
 		if reset_entities_on_start:
@@ -121,6 +150,7 @@ func start_match() -> bool:
 		if not participant.defeated.is_connected(_on_participant_defeated):
 			participant.defeated.connect(_on_participant_defeated)
 		board.register_entity(participant, starting_plot_index)
+	set_bonus_system.reset_for_match(participants)
 
 	state = MatchState.ACTIVE
 	round_number = 1
@@ -154,6 +184,26 @@ func has_roll_available() -> bool:
 	return _rolls_remaining > 0
 
 
+func has_pending_movement_adjustment() -> bool:
+	return not _pending_movement_dice.is_empty()
+
+
+func get_upcoming_roll(entity: Entity) -> Array[int]:
+	if entity != get_active_entity():
+		return []
+	return _prepared_dice_values.duplicate()
+
+
+func get_complete_property_sets(entity: Entity) -> Array[PropertyGroupData]:
+	return set_bonus_system.get_complete_sets(entity)
+
+
+func get_building_cost(entity: Entity, building: BuildingData) -> int:
+	if building == null:
+		return 0
+	return set_bonus_system.get_construction_cost(entity, building.build_cost)
+
+
 func get_pending_purchase_plot() -> Plot:
 	return property_action_system.get_pending_purchase_plot()
 
@@ -185,6 +235,8 @@ func get_turn_token() -> int:
 ## Shared action behind both the turn button and its keyboard shortcut. Before
 ## rolling it rolls; after movement resolves it ends the turn.
 func request_turn_action(requesting_entity: Entity = null) -> bool:
+	if has_pending_movement_adjustment():
+		return false
 	if has_roll_available():
 		return request_roll(requesting_entity)
 	if has_active_entity_rolled():
@@ -203,30 +255,102 @@ func request_roll(requesting_entity: Entity = null) -> bool:
 	if active_entity.type == Entity.EntityType.AI and auto_play_ai:
 		return false
 
-	play_active_turn(active_entity.roll_dice())
+	var dice_values := (
+		_prepared_dice_values.duplicate()
+		if not _prepared_dice_values.is_empty()
+		else active_entity.roll_dice()
+	)
+	_prepared_dice_values.clear()
+	if set_bonus_system.can_adjust_movement(active_entity):
+		_begin_roll(active_entity, dice_values)
+		_pending_movement_dice = dice_values.duplicate()
+		var group := set_bonus_system.get_controlled_group(
+			active_entity,
+			PropertyGroupData.ControlBonus.GUIDED_CURRENT
+		)
+		movement_adjustment_required.emit(
+			active_entity,
+			dice_values.duplicate(),
+			group.control_bonus_value
+		)
+		return true
+	play_active_turn(dice_values)
+	return true
+
+
+func request_movement_adjustment(
+	requesting_entity: Entity,
+	adjustment: int
+) -> bool:
+	var active_entity := get_active_entity()
+	if (
+		state != MatchState.ACTIVE
+		or _turn_is_resolving
+		or requesting_entity != active_entity
+		or not has_pending_movement_adjustment()
+		or not set_bonus_system.consume_movement_adjustment(active_entity, adjustment)
+	):
+		return false
+	var dice_values := _pending_movement_dice.duplicate()
+	_pending_movement_dice.clear()
+	var movement_total: int = dice_values[0] + dice_values[1] + adjustment
+	movement_adjustment_resolved.emit(active_entity, adjustment, movement_total)
+	_resolve_roll_movement(active_entity, dice_values, movement_total)
 	return true
 
 
 ## Resolves the active participant's roll. The turn remains active after physical
 ## movement and landing behaviour complete until request_end_turn() is called.
-func play_active_turn(dice_values: Array[int]) -> int:
+func play_active_turn(dice_values: Array[int], movement_adjustment := 0) -> int:
 	var active_entity := get_active_entity()
 	if not _can_resolve_turn(active_entity):
 		return -1
 	if not _are_valid_dice(dice_values):
 		push_error("A turn requires exactly two dice values between 1 and 6.")
 		return -1
+	if (
+		movement_adjustment != 0
+		and not set_bonus_system.consume_movement_adjustment(
+			active_entity,
+			movement_adjustment
+		)
+	):
+		return -1
 
-	_turn_is_resolving = true
+	_prepared_dice_values.clear()
+	_begin_roll(active_entity, dice_values)
+	return await _resolve_roll_movement(
+		active_entity,
+		dice_values,
+		dice_values[0] + dice_values[1] + movement_adjustment
+	)
+
+
+func _begin_roll(active_entity: Entity, dice_values: Array[int]) -> void:
 	_rolls_remaining -= 1
 	_active_entity_has_rolled = true
+	dice_rolled.emit(active_entity, dice_values.duplicate())
+
+
+func _resolve_roll_movement(
+	active_entity: Entity,
+	dice_values: Array[int],
+	movement_total: int
+) -> int:
+	_turn_is_resolving = true
 	var resolving_index := active_participant_index
 	var resolving_round := round_number
 	var resolving_turn := turn_number
 	var rolled_values := dice_values.duplicate()
-	dice_rolled.emit(active_entity, rolled_values)
-
-	var destination_index := await board.move_entity(active_entity, rolled_values)
+	var unmodified_total: int = rolled_values[0] + rolled_values[1]
+	var destination_index: int
+	if movement_total == unmodified_total:
+		destination_index = await board.move_entity(active_entity, rolled_values)
+	else:
+		destination_index = await board.move_entity_by_spaces(
+			active_entity,
+			movement_total
+		)
 	_turn_is_resolving = false
 	_last_destination_index = destination_index
 	roll_finished.emit(
@@ -251,7 +375,11 @@ func play_active_turn(dice_values: Array[int]) -> int:
 ## and future network authority all use the same validation path.
 func request_end_turn(requesting_entity: Entity = null) -> bool:
 	var active_entity := get_active_entity()
-	if state != MatchState.ACTIVE or _turn_is_resolving:
+	if (
+		state != MatchState.ACTIVE
+		or _turn_is_resolving
+		or has_pending_movement_adjustment()
+	):
 		return false
 	if not is_instance_valid(active_entity) or not _active_entity_has_rolled:
 		return false
@@ -324,6 +452,7 @@ func request_construct_building(
 	building: BuildingData
 ) -> bool:
 	var active_entity := get_active_entity()
+	var construction_cost := get_building_cost(active_entity, building)
 	if (
 		state != MatchState.ACTIVE
 		or _turn_is_resolving
@@ -331,15 +460,21 @@ func request_construct_building(
 		or requesting_entity != active_entity
 		or not is_instance_valid(plot)
 		or building == null
+		or has_pending_movement_adjustment()
 		or has_pending_landing_action()
 		or not available_buildings.has(building)
-		or not plot.can_construct_building(active_entity, building)
+		or not plot.can_construct_building(active_entity, building, construction_cost)
 	):
 		return false
 
-	if not plot.construct_building(active_entity, building):
+	if not plot.construct_building(active_entity, building, construction_cost):
 		return false
-	building_constructed.emit(active_entity, plot, building, building.build_cost)
+	set_bonus_system.commit_construction_discount(
+		active_entity,
+		building.build_cost,
+		construction_cost
+	)
+	building_constructed.emit(active_entity, plot, building, construction_cost)
 	return true
 
 
@@ -385,6 +520,7 @@ func _can_manage_bank(requesting_entity: Entity, plot: Plot) -> bool:
 	return (
 		state == MatchState.ACTIVE
 		and not _turn_is_resolving
+		and not has_pending_movement_adjustment()
 		and not has_pending_landing_action()
 		and is_instance_valid(requesting_entity)
 		and requesting_entity == get_active_entity()
@@ -399,6 +535,7 @@ func can_play_card(requesting_entity: Entity, card: CardData) -> bool:
 	if (
 		state != MatchState.ACTIVE
 		or _turn_is_resolving
+		or has_pending_movement_adjustment()
 		or not is_instance_valid(active_entity)
 		or requesting_entity != active_entity
 		or card == null
@@ -413,15 +550,62 @@ func can_play_card(requesting_entity: Entity, card: CardData) -> bool:
 		CardData.EffectType.ADDITIONAL_ROLL:
 			return _active_entity_has_rolled and not has_roll_available()
 		CardData.EffectType.MOVE_TO_NEAREST_HOSPITAL:
-			return card_effect_system.has_hospital(board, active_entity)
+			return (
+				int(_hospital_run_round_by_entity.get(active_entity, -1))
+				!= round_number
+				and card_effect_system.has_hospital(board, active_entity)
+			)
+	return false
+
+
+## Developer-only mutation surface. Presentation gates access behind the local
+## Dev Tools setting; authority still restricts the grant to the active human.
+func debug_grant_random_card(requesting_entity: Entity) -> CardData:
+	if (
+		state != MatchState.ACTIVE
+		or requesting_entity != get_active_entity()
+		or not is_instance_valid(requesting_entity)
+		or requesting_entity.type != Entity.EntityType.PLAYER
+		or requesting_entity.is_defeated()
+		or debug_card_selector == null
+	):
+		return null
+	var card := debug_card_selector.draw_card()
+	if card == null or not requesting_entity.add_card(card):
+		return null
+	debug_card_granted.emit(requesting_entity, card)
+	return card
+
+
+func can_target_card(
+	requesting_entity: Entity,
+	card: CardData,
+	target_plot: Plot = null
+) -> bool:
+	if not can_play_card(requesting_entity, card):
+		return false
+	match card.target_mode:
+		CardData.TargetMode.SELF:
+			return target_plot == null
+		CardData.TargetMode.PROPERTY:
+			return (
+				is_instance_valid(target_plot)
+				and board.plots.has(target_plot)
+				and target_plot.data != null
+				and target_plot.data.is_ownable()
+			)
 	return false
 
 
 ## Plays one card through the authoritative turn facade. Callers should await
 ## this command because movement cards complete only after their route travel
 ## and landing effects have resolved.
-func request_play_card(requesting_entity: Entity, card: CardData) -> bool:
-	if not can_play_card(requesting_entity, card):
+func request_play_card(
+	requesting_entity: Entity,
+	card: CardData,
+	target_plot: Plot = null
+) -> bool:
+	if not can_target_card(requesting_entity, card, target_plot):
 		return false
 	if not requesting_entity.remove_card(card):
 		return false
@@ -454,6 +638,7 @@ func request_play_card(requesting_entity: Entity, card: CardData) -> bool:
 				CARD_PLAY_RESULT_SCRIPT.Outcome.ADDITIONAL_ROLL_GRANTED,
 				board.get_entity_plot_index(requesting_entity)
 			))
+			_prepare_upcoming_roll(requesting_entity)
 			return true
 		CardData.EffectType.MOVE_TO_NEAREST_HOSPITAL:
 			var destination_index: int = await card_effect_system.move_to_nearest_hospital(
@@ -464,6 +649,7 @@ func request_play_card(requesting_entity: Entity, card: CardData) -> bool:
 			if destination_index < 0:
 				requesting_entity.add_card(card)
 				return false
+			_hospital_run_round_by_entity[requesting_entity] = round_number
 			_last_destination_index = destination_index
 			card_played.emit(CARD_PLAY_RESULT_SCRIPT.new(
 				requesting_entity,
@@ -495,13 +681,17 @@ func _begin_current_turn() -> void:
 	_active_entity_has_rolled = false
 	_rolls_remaining = 1
 	_last_destination_index = -1
+	_pending_movement_dice.clear()
+	_prepared_dice_values.clear()
 	property_action_system.clear_pending_action()
+	set_bonus_system.begin_turn(active_entity)
 	turn_started.emit(
 		active_entity,
 		active_participant_index,
 		round_number,
 		turn_number
 	)
+	_prepare_upcoming_roll(active_entity)
 
 	if active_entity.type == Entity.EntityType.AI and auto_play_ai:
 		ai_turn_controller.schedule_turn(
@@ -510,6 +700,17 @@ func _begin_current_turn() -> void:
 			_turn_generation,
 			ai_roll_delay
 		)
+
+
+func _prepare_upcoming_roll(entity: Entity) -> void:
+	_prepared_dice_values.clear()
+	if not set_bonus_system.controls_bonus(
+		entity,
+		PropertyGroupData.ControlBonus.INTELLIGENCE_NETWORK
+	):
+		return
+	_prepared_dice_values = entity.roll_dice()
+	upcoming_roll_revealed.emit(entity, _prepared_dice_values.duplicate())
 
 
 func _advance_turn() -> void:
@@ -550,6 +751,8 @@ func _finish_match(winner: Entity) -> void:
 	_active_entity_has_rolled = false
 	_rolls_remaining = 0
 	_last_destination_index = -1
+	_prepared_dice_values.clear()
+	_pending_movement_dice.clear()
 	property_action_system.clear_pending_action()
 	_turn_generation += 1
 	active_participant_index = -1
@@ -572,9 +775,16 @@ func _ensure_gameplay_systems() -> void:
 		card_effect_system = CARD_EFFECT_SYSTEM_SCRIPT.new()
 		card_effect_system.name = "CardEffectSystem"
 		add_child(card_effect_system)
+	set_bonus_system = get_node_or_null(^"SetBonusSystem") as SetBonusSystem
+	if set_bonus_system == null:
+		set_bonus_system = SetBonusSystem.new()
+		set_bonus_system.name = "SetBonusSystem"
+		add_child(set_bonus_system)
 
 	if is_instance_valid(board):
 		property_action_system.configure(board, _can_offer_property_action)
+		set_bonus_system.configure(board, participants)
+		board.building_effect_system.set_set_bonus_system(set_bonus_system)
 	if not property_action_system.purchase_offered.is_connected(
 		_on_property_purchase_offered
 	):
@@ -582,6 +792,12 @@ func _ensure_gameplay_systems() -> void:
 		property_action_system.purchase_resolved.connect(_on_property_purchase_resolved)
 		property_action_system.rent_required.connect(_on_property_rent_required)
 		property_action_system.rent_paid.connect(_on_property_rent_paid)
+	if not set_bonus_system.complete_sets_changed.is_connected(
+		_on_complete_sets_changed
+	):
+		set_bonus_system.complete_sets_changed.connect(_on_complete_sets_changed)
+		set_bonus_system.charge_changed.connect(_on_set_bonus_charge_changed)
+		set_bonus_system.bonus_triggered.connect(_on_set_bonus_triggered)
 
 
 func _can_offer_property_action(entity: Entity) -> bool:
@@ -628,6 +844,9 @@ func _on_property_rent_paid(
 	amount: int
 ) -> void:
 	rent_paid.emit(payer, owner, plot, amount)
+	var tribute := set_bonus_system.consume_tribute(owner, payer, amount)
+	if tribute > 0:
+		owner.add_money(tribute)
 	if amount > 0 and plot.has_building_type(BuildingData.BuildingType.HOTEL):
 		_publish_building_effect(BuildingActivation.new(
 			BuildingActivation.EffectKind.RENT_INCOME,
@@ -641,6 +860,30 @@ func _on_property_rent_paid(
 
 func _on_start_income_awarded(entity: Entity, amount: int) -> void:
 	start_income_awarded.emit(entity, amount)
+
+
+func _on_complete_sets_changed(
+	entity: Entity,
+	controlled_sets: Array[PropertyGroupData]
+) -> void:
+	complete_sets_changed.emit(entity, controlled_sets)
+
+
+func _on_set_bonus_charge_changed(
+	entity: Entity,
+	group: PropertyGroupData,
+	charges: int
+) -> void:
+	set_bonus_charge_changed.emit(entity, group, charges)
+
+
+func _on_set_bonus_triggered(
+	entity: Entity,
+	group: PropertyGroupData,
+	amount: int,
+	context: StringName
+) -> void:
+	set_bonus_triggered.emit(entity, group, amount, context)
 
 
 func _on_board_building_effect_resolved(activation: BuildingActivation) -> void:
@@ -706,6 +949,7 @@ func _can_resolve_turn(active_entity: Entity) -> bool:
 	return (
 		state == MatchState.ACTIVE
 		and not _turn_is_resolving
+		and not has_pending_movement_adjustment()
 		and has_roll_available()
 		and not has_pending_landing_action()
 		and is_instance_valid(active_entity)
